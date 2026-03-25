@@ -7,7 +7,7 @@ const bodyParser = require('body-parser');
 app.use(express.json());
 app.use(bodyParser.json());
 
-app.post("/",async (req,res)=>{
+app.get("/",async (req,res)=>{
 
     const prompt = req.body.prompt;
 
