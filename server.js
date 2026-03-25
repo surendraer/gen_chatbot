@@ -1,6 +1,7 @@
 const { GoogleGenAI } = require("@google/genai");
 const express = require("express");
 const app = express();
+const db = require("./db");
 require("dotenv").config();
 const ai = new GoogleGenAI({});
 const bodyParser = require('body-parser');
