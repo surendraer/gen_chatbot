@@ -31,7 +31,7 @@ router.post("/login", async (req,res)=>{
     try {
         const {userName,password} = req.body;
         const user = await User.findOne(userName);
-        if(!user || !!(await user.comparePassword(password))){
+        if(!user || !(await user.comparePassword(password))){
             return res.status(401).json({message: "User not found"});
         }
 
