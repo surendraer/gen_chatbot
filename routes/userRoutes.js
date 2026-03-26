@@ -30,9 +30,15 @@ router.post("/signup", async (req,res)=>{
 router.post("/login", async (req,res)=>{
     try {
         const {userName,password} = req.body;
-        const user = await User.findOne(userName);
-        if(!user || !(await user.comparePassword(password))){
+        const user = await User.findOne({userName:userName});
+
+        if(!user){
             return res.status(401).json({message: "User not found"});
+        }
+
+        const isPasswordMatch = await user.comparePassword(password)
+        if(! isPasswordMatch){
+            return res.status(401).json({message: "Invalid password"});
         }
 
         const payload = 
@@ -50,7 +56,7 @@ router.post("/login", async (req,res)=>{
 // user profile
 router.get("/profile", jwtAuthMiddleware, async (req,res)=>{
     try {
-        const userData = req.user;
+        const userData = req.user.id;
         const user = await User.findById(userData);
 
         res.status(200).json(user);
