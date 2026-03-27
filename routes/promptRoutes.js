@@ -4,12 +4,16 @@ const {generateToken,jwtAuthMiddleware} = require("../jwt");
 const router = express.Router();
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({});
+const ai = new GoogleGenAI({GEMINI_API_KEY:(process.env.GEMINI_API_KEY)});
 
-router.get("/",async (req,res)=>{
+router.post("/",async (req,res)=>{
 
     try {
     const prompt = req.body.prompt;
+    if(!prompt){
+        return res.status(400).json({message:"Empty prompt"});
+    }
+
     const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
     contents: prompt,
