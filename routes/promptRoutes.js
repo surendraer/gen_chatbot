@@ -4,7 +4,7 @@ const {generateToken,jwtAuthMiddleware} = require("../jwt");
 const router = express.Router();
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({GEMINI_API_KEY:(process.env.GEMINI_API_KEY)});
+const ai = new GoogleGenAI({GEMINI_API_KEY: process.env.GEMINI_API_KEY});
 
 router.post("/",async (req,res)=>{
 
