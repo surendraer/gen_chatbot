@@ -18,8 +18,6 @@ if (missingEnvs.length > 0) {
 }
 
 
-
-const bodyParser = require('body-parser');
 app.use(express.json());
 const {generateToken,jwtAuthMiddleware} = require("./jwt");
 const userRoutes = require("./routes/userRoutes");

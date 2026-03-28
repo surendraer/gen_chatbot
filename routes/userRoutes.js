@@ -20,6 +20,53 @@ router.post("/signup", async (req,res)=>{
 
     try {
         const data = req.body;
+
+        const name = (data.name || "").trim();
+        const userName = (data.userName || "").trim();
+        const email = (data.email || "").trim().toLowerCase();
+        const mobile = String(data.mobile || "").trim();
+        const password = (data.password || "").trim();
+        const age = Number(data.age);
+
+        if (!name || !userName || !email || !mobile || !password || Number.isNaN(age)) {
+        return res.status(400).json({ message: "All fields are required" });
+        }
+        if (name.length < 2 || name.length > 50) {
+        return res.status(400).json({ message: "Name must be between 2 and 50 characters" });
+        }
+        if (!/^[a-zA-Z0-9_]{3,20}$/.test(userName)) {
+        return res.status(400).json({
+            message: "Username must be 3-20 chars and contain only letters, numbers, underscore"
+        });
+        }
+        if (!Number.isInteger(age) || age < 13 || age > 120) {
+        return res.status(400).json({ message: "Age must be an integer between 13 and 120" });
+        }
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Invalid email format" });
+        }
+        if (!/^\d{10}$/.test(mobile)) {
+        return res.status(400).json({ message: "Mobile must be exactly 10 digits" });
+        }
+        if (
+        password.length < 8 ||
+        !/[A-Z]/.test(password) ||
+        !/[a-z]/.test(password) ||
+        !/[0-9]/.test(password) ||
+        !/[^A-Za-z0-9]/.test(password)
+        ) {
+        return res.status(400).json({
+            message: "Password must be at least 8 chars and include uppercase, lowercase, number, special character"
+        });
+        }
+
+        data.name = name;
+        data.userName = userName;
+        data.email = email;
+        data.mobile = mobile;
+        data.password = password;
+        data.age = age;
+        
         const newUser = new User(data);
         const response = await newUser.save();
 
@@ -50,6 +97,9 @@ router.post("/signup", async (req,res)=>{
 router.post("/login", async (req,res)=>{
     try {
         const {userName,password} = req.body;
+        if(!userName.trim() || !password.trim()){
+            return res.status(400).json({message: "invalid login credentials"});
+        }
         const user = await User.findOne({userName:userName});
 
         if(!user){
