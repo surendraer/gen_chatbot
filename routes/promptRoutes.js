@@ -1,10 +1,8 @@
 const express = require("express");
-const User = require("../models/user");
-const {generateToken,jwtAuthMiddleware} = require("../jwt");
 const router = express.Router();
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({GEMINI_API_KEY: process.env.GEMINI_API_KEY});
+const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
 router.post("/",async (req,res)=>{
 
@@ -20,7 +18,12 @@ router.post("/",async (req,res)=>{
     });
 
     console.log(response.text);
-    res.status(200).json(response.text);
+    res.status(200).json({
+        success: true,
+        message: "answer generated successfully",
+        data:{
+            answer: response.text}
+    });
     console.log(response.text);  
 
     } catch (error) {
