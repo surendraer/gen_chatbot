@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const Prompt = require("../models/prompt");
 require("dotenv").config();
 const { GoogleGenAI } = require("@google/genai");
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -8,6 +9,7 @@ router.post("/", async (req, res) => {
 
     try {
         const prompt = req.body.prompt;
+        const userId = req.user.id;
         if (!prompt) {
             return res.status(400).json({ success: false, message: "Empty prompt" });
         }
@@ -16,6 +18,14 @@ router.post("/", async (req, res) => {
             model: "gemini-3-flash-preview",
             contents: prompt,
         });
+
+        const newPrompt = new Prompt({
+            textPrompt: prompt,
+            textAnswer: response.text,
+            userId : userId
+        });
+
+        await newPrompt.save();
 
         console.log(response.text);
         res.status(200).json({
@@ -32,6 +42,25 @@ router.post("/", async (req, res) => {
         res.status(500).json({ success: false, message: "Internal server error" });
     }
 
+
+});
+
+router.get("/history", async (req,res)=>{
+
+    try {
+        const prompts = await Prompt.find({userId: req.user.id});
+        res.status(200).json({
+        success:true,
+        data: prompts
+        });        
+    } catch (error) {
+        console.log("error in fetching user prompt history"+error);
+        res.status(400).json({
+            success:false,
+            message:"error in finding user history"
+        });
+        
+    }
 
 })
 
