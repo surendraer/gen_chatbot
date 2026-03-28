@@ -1,7 +1,7 @@
-# Gemini Project – Full Documentation
+# GemBot Project – Full Documentation
 
 ## Overview
-Gemini is a Node.js backend application that allows users to register, authenticate, and interact with a Google Gemini AI model. Users can submit prompts, receive AI-generated answers, and view their prompt history. The project uses Express.js, MongoDB (via Mongoose), JWT authentication, and Google Gemini AI API.
+GemBot is a Node.js backend application that allows users to register, authenticate, and interact with a Google Gemini AI model. Users can submit prompts, receive AI-generated answers, and view their prompt history. The project uses Express.js, MongoDB (via Mongoose), JWT authentication, and Google Gemini AI API.
 
 ---
 
