@@ -31,21 +31,21 @@ const userSchema = new mongoose.Schema({
     }
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword){
+userSchema.methods.comparePassword = async function (candidatePassword) {
     try {
         const isMatch = await bcrypt.compare(candidatePassword, this.password);
         return isMatch;
     } catch (error) {
-        console.log("error in comparing password"+ error);
+        console.log("error in comparing password" + error);
         throw error;
     }
 };
 
-userSchema.pre("save", async function (){
+userSchema.pre("save", async function () {
     try {
         const user = this;
 
-        if(!user.isModified("password")){
+        if (!user.isModified("password")) {
             return;
         }
 
@@ -53,8 +53,8 @@ userSchema.pre("save", async function (){
         const hashedPassword = await bcrypt.hash(user.password, salt);
         user.password = hashedPassword;
     } catch (error) {
-        console.log("error in hashing the password: "+ error);
-        throw(error);
+        console.log("error in hashing the password: " + error);
+        throw (error);
     }
 
 })
