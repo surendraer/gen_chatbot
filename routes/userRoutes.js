@@ -141,7 +141,23 @@ router.post("/password/reset", jwtAuthMiddleware, async (req, res) => {
 
 // forgot password (need email verification for this so i have to it later);
 // profile update
+// handle the password chnage (dont allow it)
+router.put("/profile/update", jwtAuthMiddleware, async(req,res)=>{
+    try {
+        const userId = req.user.id;
+        
+        const newData = req.body;
+        const response = await User.findByIdAndUpdate(userId, newData, {new:true});
+        res.status(200).json({
+            success:true,
+            message: "profile updated successfully",
+            data: response
+        })
+    } catch (error) {
+        res.status(500).json({ success:false, message: "internal server error" });
 
+    }
+})
 //profile delete
 // need to add password validation later
 router.delete("/profile/delete", jwtAuthMiddleware, async (req, res) => {
