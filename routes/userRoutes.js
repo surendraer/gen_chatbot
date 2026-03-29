@@ -93,6 +93,72 @@ router.post("/signup", async (req, res) => {
         res.status(500).json({ success: false, message: "user not registered" });
     }
 });
+//password reset
+router.post("/password/reset", jwtAuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+        if (currentPassword.trim() == "" || newPassword.trim() == "") {
+            return res.status(400).json({
+                success: false,
+                message: "password field cant be empty"
+            })
+        };
+        if (
+            newPassword.length < 8 ||
+            !/[A-Z]/.test(newPassword) ||
+            !/[a-z]/.test(newPassword) ||
+            !/[0-9]/.test(newPassword) ||
+            !/[^A-Za-z0-9]/.test(newPassword)
+        ) {
+            return res.status(400).json({
+                success: false,
+                message: "Password must be at least 8 chars and include uppercase, lowercase, number, special character"
+            });
+        }
+        const user = await User.findById(userId);
+        if (!await user.comparePassword(currentPassword)) {
+            return res.status(400).json({
+                success: false,
+                message: "current password is wrong"
+            })
+        };
+
+        user.password = newPassword;
+        await user.save();
+        res.status(200).json({
+            success: true,
+            message: "password reset successfully"
+        })
+    } catch (error) {
+        res.status(404).json({
+            success: false,
+            message: "problem in resetting password"
+        });
+
+    }
+})
+
+// forgot password (need email verification for this so i have to it later);
+// profile update
+
+//profile delete
+// need to add password validation later
+router.delete("/profile/delete", jwtAuthMiddleware, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const response = await User.findByIdAndDelete(userId);
+        res.status(200).json({
+            success: true,
+            message: "user deleted successfully",
+            data: response
+        })
+    } catch (error) {
+        res.status(500).json({ success: false, message: "internal server error" });
+
+    }
+})
+
 
 // login 
 
