@@ -19,7 +19,11 @@ if (missingEnvs.length > 0) {
 }
 
 
-app.use(cors());
+app.use(cors({
+  origin: ["https://gen-chatbot-three.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 const {jwtAuthMiddleware } = require("./jwt");
 const userRoutes = require("./routes/userRoutes");
