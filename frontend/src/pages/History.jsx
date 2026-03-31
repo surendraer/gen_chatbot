@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, History as HistoryIcon, User, Bot, ChevronLeft, ChevronRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import api from '../api';
 
 const History = () => {
@@ -98,7 +99,7 @@ const History = () => {
                   <div style={{ flex: 1 }}>
                     <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>GenBot Responded</h4>
                     <div style={{ color: 'var(--text-main)', opacity: 0.9, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      {item.textAnswer}
+                      <ReactMarkdown className="markdown-body">{item.textAnswer}</ReactMarkdown>
                     </div>
                   </div>
                 </div>

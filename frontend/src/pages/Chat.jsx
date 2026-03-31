@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send, Bot, User as UserIcon } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import api from '../api';
 import { AuthContext } from '../context/AuthContext';
 
@@ -100,7 +101,7 @@ const Chat = () => {
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  {msg.text}
+                  {msg.sender === 'user' ? msg.text : <ReactMarkdown className="markdown-body">{msg.text}</ReactMarkdown>}
                 </div>
               </motion.div>
             ))}
