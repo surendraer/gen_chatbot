@@ -147,7 +147,8 @@ router.put("/profile/update", jwtAuthMiddleware, async(req,res)=>{
         const userId = req.user.id;
         
         const newData = req.body;
-        const response = await User.findByIdAndUpdate(userId, newData, {new:true});
+        const { password, ...safeData } = newData;
+        const response = await User.findByIdAndUpdate(userId, safeData, {new:true});
         res.status(200).json({
             success:true,
             message: "profile updated successfully",

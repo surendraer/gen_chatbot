@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 const db = require("./db");
 require("dotenv").config();
+const cors = require("cors");
 
 
 const requiredEnvs = ["MONGO_URL", "JWT_SECRET", "GEMINI_API_KEY"];
@@ -18,6 +19,7 @@ if (missingEnvs.length > 0) {
 }
 
 
+app.use(cors());
 app.use(express.json());
 const {jwtAuthMiddleware } = require("./jwt");
 const userRoutes = require("./routes/userRoutes");
