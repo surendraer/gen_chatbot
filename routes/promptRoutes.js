@@ -2,8 +2,13 @@ const express = require("express");
 const router = express.Router();
 const Prompt = require("../models/prompt");
 require("dotenv").config();
-const { GoogleGenAI } = require("@google/genai");
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const OpenAI = require("openai");
+const client = new OpenAI({
+    apiKey: process.env.GROQ_API_KEY,
+    baseURL: "https://api.groq.com/openai/v1",
+});
+//const { GoogleGenAI } = require("@google/genai");
+//const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 router.post("/", async (req, res) => {
 
@@ -14,9 +19,13 @@ router.post("/", async (req, res) => {
             return res.status(400).json({ success: false, message: "Empty prompt" });
         }
 
-        const response = await ai.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents: prompt,
+        // const response = await ai.models.generateContent({
+        //     model: "gemini-3-flash-preview",
+        //     contents: prompt,
+        // });
+        const response = await client.responses.create({
+            model: "openai/gpt-oss-20b",
+            input: prompt,
         });
 
         const newPrompt = new Prompt({
@@ -32,10 +41,11 @@ router.post("/", async (req, res) => {
             success: true,
             message: "answer generated successfully",
             data: {
-                answer: response.text
+                answer: response.output_text
             }
         });
-        console.log(response.text);
+        //console.log(response.text);
+        console.log(response.output_text);
 
     } catch (error) {
         console.log(error);
@@ -44,6 +54,11 @@ router.post("/", async (req, res) => {
 
 
 });
+
+
+
+
+
 
 router.get("/history", async (req,res)=>{
 
