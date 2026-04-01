@@ -5,7 +5,7 @@ require("dotenv").config();
 const cors = require("cors");
 
 
-const requiredEnvs = ["MONGO_URL", "JWT_SECRET", "GEMINI_API_KEY"];
+const requiredEnvs = ["MONGO_URL", "JWT_SECRET", "GROQ_API_KEY"];
 
 const missingEnvs = requiredEnvs.filter((key) => {
     const value = process.env[key];

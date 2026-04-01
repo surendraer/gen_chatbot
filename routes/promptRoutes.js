@@ -30,13 +30,13 @@ router.post("/", async (req, res) => {
 
         const newPrompt = new Prompt({
             textPrompt: prompt,
-            textAnswer: response.text,
+            textAnswer: response.output_text,
             userId : userId
         });
 
         await newPrompt.save();
 
-        console.log(response.text);
+        console.log(response.output_text);
         res.status(200).json({
             success: true,
             message: "answer generated successfully",
