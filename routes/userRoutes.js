@@ -62,6 +62,24 @@ router.post("/signup", async (req, res) => {
             });
         }
 
+        // Check for existing user
+        const existingUser = await User.findOne({
+            $or: [
+                { email: email },
+                { userName: userName },
+                { mobile: mobile }
+            ]
+        });
+
+        if (existingUser) {
+            let conflictMsg = "User already exists";
+            if (existingUser.email === email) conflictMsg = "Email is already registered";
+            else if (existingUser.userName === userName) conflictMsg = "Username is already taken";
+            else if (existingUser.mobile === mobile) conflictMsg = "Mobile number is already registered";
+            
+            return res.status(409).json({ success: false, message: conflictMsg });
+        }
+
         data.name = name;
         data.userName = userName;
         data.email = email;
@@ -83,14 +101,13 @@ router.post("/signup", async (req, res) => {
             success: true,
             message: "User Registered successfully",
             data: {
-
                 response: toPublicUser(response),
                 token: token
             }
         });
     } catch (error) {
-        console.log("error in registering user : " + error);
-        res.status(500).json({ success: false, message: "user not registered" });
+        console.error("error in registering user :", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
     }
 });
 //password reset
@@ -145,18 +162,60 @@ router.post("/password/reset", jwtAuthMiddleware, async (req, res) => {
 router.put("/profile/update", jwtAuthMiddleware, async(req,res)=>{
     try {
         const userId = req.user.id;
-        
         const newData = req.body;
-        const { password, ...safeData } = newData;
-        const response = await User.findByIdAndUpdate(userId, safeData, {new:true});
-        res.status(200).json({
-            success:true,
-            message: "profile updated successfully",
-            data: response
-        })
-    } catch (error) {
-        res.status(500).json({ success:false, message: "internal server error" });
 
+        // Strip sensitive fields
+        const { password, _id, id, ...safeData } = newData;
+
+        // Perform basic validation on updated fields if they exist
+        if (safeData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(safeData.email)) {
+            return res.status(400).json({ success: false, message: "Invalid email format" });
+        }
+        if (safeData.mobile && !/^\d{10}$/.test(safeData.mobile)) {
+            return res.status(400).json({ success: false, message: "Mobile must be exactly 10 digits" });
+        }
+        if (safeData.age) {
+            const ageNum = Number(safeData.age);
+            if (!Number.isInteger(ageNum) || ageNum < 13 || ageNum > 120) {
+                return res.status(400).json({ success: false, message: "Invalid age" });
+            }
+        }
+
+        // Check for conflicts if unique fields are being updated
+        if (safeData.email || safeData.userName || safeData.mobile) {
+            const conflictQuery = [];
+            if (safeData.email) conflictQuery.push({ email: safeData.email });
+            if (safeData.userName) conflictQuery.push({ userName: safeData.userName });
+            if (safeData.mobile) conflictQuery.push({ mobile: safeData.mobile });
+
+            const conflict = await User.findOne({
+                _id: { $ne: userId },
+                $or: conflictQuery
+            });
+
+            if (conflict) {
+                let msg = "One of the provided unique fields is already in use";
+                if (conflict.email === safeData.email) msg = "Email already in use";
+                else if (conflict.userName === safeData.userName) msg = "Username already taken";
+                else if (conflict.mobile === safeData.mobile) msg = "Mobile already in use";
+                return res.status(409).json({ success: false, message: msg });
+            }
+        }
+
+        const response = await User.findByIdAndUpdate(userId, safeData, { new: true, runValidators: true });
+        
+        if (!response) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Profile updated successfully",
+            data: toPublicUser(response)
+        });
+    } catch (error) {
+        console.error("Profile update error:", error);
+        res.status(500).json({ success: false, message: "An error occurred while updating the profile" });
     }
 })
 //profile delete
