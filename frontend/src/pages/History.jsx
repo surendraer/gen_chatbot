@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, History as HistoryIcon, User, Bot, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, History as HistoryIcon, User, Bot, ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import api from '../api';
 
@@ -31,6 +31,21 @@ const History = () => {
     fetchHistory();
   }, []);
 
+  const handleClearHistory = async () => {
+    if (!window.confirm("Are you sure you want to clear your entire chat history? This cannot be undone.")) return;
+    
+    try {
+      const { data } = await api.delete('/prompt/clear');
+      if (data.success) {
+        setHistory([]);
+        setCurrentPage(1);
+      }
+    } catch (err) {
+      console.error("Failed to clear history", err);
+      alert("Error: Could not clear history.");
+    }
+  };
+
   const filteredHistory = history.filter(item => {
     const prompt = (item.textPrompt || "").toLowerCase();
     const answer = (item.textAnswer || "").toLowerCase();
@@ -55,16 +70,32 @@ const History = () => {
           <p style={{ color: 'var(--text-muted)', marginTop: '0.5rem' }}>Review and filter your past AI interactions.</p>
         </div>
 
-        <div style={{ position: 'relative', width: '100%', maxWidth: '300px' }}>
-          <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="Search conversations..." 
-            className="input-base"
-            style={{ paddingLeft: '48px', borderRadius: 'var(--border-radius-xl)' }}
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-          />
+        <div style={{ position: 'relative', width: '100%', maxWidth: '450px', display: 'flex', gap: '1rem' }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input 
+              type="text" 
+              placeholder="Search conversations..." 
+              className="input-base"
+              style={{ paddingLeft: '48px', borderRadius: 'var(--border-radius-xl)' }}
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+            />
+          </div>
+          {history.length > 0 && (
+            <button 
+              onClick={handleClearHistory}
+              className="btn-secondary"
+              style={{ 
+                display: 'flex', alignItems: 'center', gap: '0.5rem', 
+                color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)',
+                background: 'rgba(239, 68, 68, 0.05)'
+              }}
+              title="Clear all history"
+            >
+              <Trash2 size={18} /> <span className="hide-on-mobile">Clear</span>
+            </button>
+          )}
         </div>
       </div>
 

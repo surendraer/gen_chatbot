@@ -89,7 +89,22 @@ router.get("/history", async (req,res)=>{
         });
         
     }
+});
 
-})
+router.delete("/clear", async (req, res) => {
+    try {
+        await Prompt.deleteMany({ userId: req.user.id });
+        res.status(200).json({
+            success: true,
+            message: "History cleared successfully"
+        });
+    } catch (error) {
+        console.error("Error clearing history:", error);
+        res.status(500).json({
+            success: false,
+            message: "Failed to clear history"
+        });
+    }
+});
 
 module.exports = router;
