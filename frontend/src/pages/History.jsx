@@ -15,11 +15,15 @@ const History = () => {
     const fetchHistory = async () => {
       try {
         const { data } = await api.get('/prompt/history');
-        if (data.success) {
-          setHistory(data.data.reverse()); // Newest first
+        if (data && data.success && Array.isArray(data.data)) {
+          setHistory([...data.data].reverse());
+        } else {
+          console.error("Malformed or failed history response", data);
+          setHistory([]);
         }
       } catch (err) {
         console.error('Failed to fetch history', err);
+        setHistory([]);
       } finally {
         setLoading(false);
       }
@@ -27,10 +31,12 @@ const History = () => {
     fetchHistory();
   }, []);
 
-  const filteredHistory = history.filter(item => 
-    item.textPrompt.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    item.textAnswer.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredHistory = history.filter(item => {
+    const prompt = (item.textPrompt || "").toLowerCase();
+    const answer = (item.textAnswer || "").toLowerCase();
+    const search = searchTerm.toLowerCase();
+    return prompt.includes(search) || answer.includes(search);
+  });
 
   const totalPages = Math.ceil(filteredHistory.length / itemsPerPage);
   const currentItems = filteredHistory.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -75,7 +81,7 @@ const History = () => {
           <AnimatePresence initial={false}>
             {currentItems.map((item, index) => (
               <motion.div 
-                key={item._id}
+                key={item._id?.toString() || index}
                 className="glass-panel"
                 style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
                 initial={{ opacity: 0, y: 20 }}
@@ -88,7 +94,7 @@ const History = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>You Asked</h4>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt}</p>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt || "No prompt text found"}</p>
                   </div>
                 </div>
 
@@ -99,7 +105,11 @@ const History = () => {
                   <div style={{ flex: 1 }}>
                     <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>GenBot Responded</h4>
                     <div style={{ color: 'var(--text-main)', opacity: 0.9, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      <ReactMarkdown className="markdown-body">{item.textAnswer}</ReactMarkdown>
+                      <div className="markdown-body">
+                        <ReactMarkdown>
+                          {(item.textAnswer || "").toString()}
+                        </ReactMarkdown>
+                      </div>
                     </div>
                   </div>
                 </div>

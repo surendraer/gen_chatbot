@@ -101,7 +101,7 @@ const Chat = () => {
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  {msg.sender === 'user' ? msg.text : <ReactMarkdown className="markdown-body">{msg.text}</ReactMarkdown>}
+                  {msg.sender === 'user' ? msg.text : <div className="markdown-body"><ReactMarkdown>{msg.text}</ReactMarkdown></div>}
                 </div>
               </motion.div>
             ))}
