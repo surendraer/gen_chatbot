@@ -25,18 +25,79 @@ const Chat = () => {
     if (!input.trim() || loading) return;
 
     const userMsg = input.trim();
+    const userMsgId = Date.now();
+    const botMsgId = userMsgId + 1;
+
     setInput('');
-    setMessages(prev => [...prev, { id: Date.now(), text: userMsg, sender: 'user' }]);
+    setMessages(prev => [...prev, { id: userMsgId, text: userMsg, sender: 'user' }]);
     setLoading(true);
 
+    // Initial bot message that we will update in real-time
+    setMessages(prev => [...prev, { id: botMsgId, text: "", sender: 'bot' }]);
+
     try {
-      const { data } = await api.post('/prompt/', { prompt: userMsg });
-      if (data.success) {
-        setMessages(prev => [...prev, { id: Date.now()+1, text: data.data.answer, sender: 'bot' }]);
+      // Use standard fetch for streaming/SSE support
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/prompt/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ prompt: userMsg })
+      });
+
+      if (!response.ok) throw new Error("Failed to connect to AI");
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      let streamFinished = false;
+
+      while (!streamFinished) {
+        const { value, done } = await reader.read();
+        if (done) {
+          streamFinished = true;
+          break;
+        }
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split("\n");
+
+        for (const line of lines) {
+          if (line.startsWith("data: ")) {
+            const data = line.slice(6).trim();
+
+            if (data === "[DONE]") {
+              streamFinished = true;
+            } else {
+              try {
+                const parsed = JSON.parse(data);
+                if (parsed.text) {
+                  // Update only the last bot message content
+                  setMessages(prev => {
+                    const last = prev[prev.length - 1];
+                    if (last && last.id === botMsgId) {
+                      return [...prev.slice(0, -1), { ...last, text: last.text + parsed.text }];
+                    }
+                    return prev;
+                  });
+                }
+              } catch (e) {
+                // Ignore partial JSON chunks
+              }
+            }
+          }
+        }
       }
     } catch (err) {
       console.error(err);
-      setMessages(prev => [...prev, { id: Date.now()+2, text: "Sorry, I encountered an error answering that query.", sender: 'bot', error: true }]);
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.id === botMsgId) {
+          return [...prev.slice(0, -1), { ...last, text: "Error: Could not get a response.", error: true }];
+        }
+        return prev;
+      });
     } finally {
       setLoading(false);
     }
@@ -101,7 +162,7 @@ const Chat = () => {
                   wordBreak: 'break-word',
                   whiteSpace: 'pre-wrap'
                 }}>
-                  {msg.sender === 'user' ? msg.text : <ReactMarkdown className="markdown-body">{msg.text}</ReactMarkdown>}
+                  {msg.sender === 'user' ? msg.text : <div className="markdown-body"><ReactMarkdown>{msg.text}</ReactMarkdown></div>}
                 </div>
               </motion.div>
             ))}
