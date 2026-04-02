@@ -16,12 +16,16 @@ export const AuthProvider = ({ children }) => {
           if(data.success) {
             setUser(data.data.response);
           } else {
+             setUser(null);
              localStorage.removeItem('token');
           }
         } catch (error) {
           console.error("Failed to verify token", error);
+          setUser(null);
           localStorage.removeItem('token');
         }
+      } else {
+        setUser(null);
       }
       setLoading(false);
     };

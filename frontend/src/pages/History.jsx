@@ -18,6 +18,7 @@ const History = () => {
         if (data && data.success && Array.isArray(data.data)) {
           setHistory([...data.data].reverse());
         } else {
+          console.error("Malformed or failed history response", data);
           setHistory([]);
         }
       } catch (err) {
@@ -93,7 +94,7 @@ const History = () => {
                   </div>
                   <div style={{ flex: 1 }}>
                     <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>You Asked</h4>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt || "No prompt found"}</p>
+                    <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt || "No prompt text found"}</p>
                   </div>
                 </div>
 
@@ -105,7 +106,9 @@ const History = () => {
                     <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>GenBot Responded</h4>
                     <div style={{ color: 'var(--text-main)', opacity: 0.9, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
                       <div className="markdown-body">
-                         <ReactMarkdown>{(item.textAnswer || "").toString()}</ReactMarkdown>
+                        <ReactMarkdown>
+                          {(item.textAnswer || "").toString()}
+                        </ReactMarkdown>
                       </div>
                     </div>
                   </div>
