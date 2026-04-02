@@ -1,6 +1,6 @@
 # 🤖 GenBot Full-Stack AI Chat Application
 
-GenBot is a complete, production-ready full-stack application that leverages **OpenAi API** to provide users with a secure, lightning-fast, and deeply engaging conversational AI experience.
+GenBot is a complete, production-ready full-stack application that leverages **Google Gemini 2.0 Flash** to provide users with a secure, lightning-fast, and deeply engaging conversational AI experience.
 
 ### 🌟 Live Demo
 **[Launch GenBot in your browser!](https://gen-chatbot-three.vercel.app/)**
