@@ -11,48 +11,61 @@ const client = new OpenAI({
 //const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 router.post("/", async (req, res) => {
-
     try {
-        const prompt = req.body.prompt;
+        const { prompt } = req.body;
         const userId = req.user.id;
+        
         if (!prompt) {
             return res.status(400).json({ success: false, message: "Empty prompt" });
         }
 
-        // const response = await ai.models.generateContent({
-        //     model: "gemini-3-flash-preview",
-        //     contents: prompt,
-        // });
-        const response = await client.responses.create({
-            model: "openai/gpt-oss-20b",
-            input: prompt,
+        // 1. Set headers for Streaming (Server-Sent Events)
+        res.setHeader("Content-Type", "text/event-stream");
+        res.setHeader("Cache-Control", "no-cache");
+        res.setHeader("Connection", "keep-alive");
+
+        // 2. Start the AI Stream
+        const stream = await client.chat.completions.create({
+            model: "llama-3.3-70b-versatile",
+            messages: [{ role: "user", content: prompt }],
+            stream: true,
         });
 
+        let fullAnswer = "";
+
+        // 3. Loop through chunks and send to frontend
+        for await (const chunk of stream) {
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+                fullAnswer += content;
+                // SSE format: data: { JSON string }\n\n
+                res.write(`data: ${JSON.stringify({ text: content })}\n\n`);
+            }
+        }
+
+        // 4. Save to Database (History)
         const newPrompt = new Prompt({
             textPrompt: prompt,
-            textAnswer: response.output_text,
-            userId : userId
+            textAnswer: fullAnswer,
+            userId: userId
         });
-
         await newPrompt.save();
 
-        console.log(response.output_text);
-        res.status(200).json({
-            success: true,
-            message: "answer generated successfully",
-            data: {
-                answer: response.output_text
-            }
-        });
-        //console.log(response.text);
-        console.log(response.output_text);
+        // 5. Final message to close stream
+        res.write("data: [DONE]\n\n");
+        res.end();
 
     } catch (error) {
-        console.log(error);
-        res.status(500).json({ success: false, message: "Internal server error" });
+        console.error("Streaming error:", error);
+        // If headers haven't been sent yet, send a 500
+        if (!res.headersSent) {
+            res.status(500).json({ success: false, message: "Internal server error" });
+        } else {
+            // Otherwise, send an error chunk to stop the frontend
+            res.write(`data: ${JSON.stringify({ error: "Internal server error" })}\n\n`);
+            res.end();
+        }
     }
-
-
 });
 
 
