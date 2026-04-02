@@ -19,8 +19,12 @@ if (missingEnvs.length > 0) {
 }
 
 
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(",") 
+    : ["http://localhost:5173"];
+
 app.use(cors({
-  origin: ["https://gen-chatbot-three.vercel.app", "http://localhost:5173", "http://localhost:3000"],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));

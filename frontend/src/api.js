@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'https://gen-chatbot-2.onrender.com', // Uses environment variable if set, otherwise defaults to production backend
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000', 
   headers: {
     'Content-Type': 'application/json',
   },
