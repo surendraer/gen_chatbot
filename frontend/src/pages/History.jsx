@@ -46,6 +46,22 @@ const History = () => {
     }
   };
 
+  const getGroupLabel = (dateStr) => {
+    if (!dateStr) return "Earlier Messages";
+    const date = new Date(dateStr);
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+    const sevenDaysAgo = new Date(startOfToday);
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    if (date >= startOfToday) return "Today";
+    if (date >= startOfYesterday) return "Yesterday";
+    if (date >= sevenDaysAgo) return "Last 7 Days";
+    return "Earlier";
+  };
+
   const filteredHistory = history.filter(item => {
     const prompt = (item.textPrompt || "").toLowerCase();
     const answer = (item.textAnswer || "").toLowerCase();
@@ -58,6 +74,15 @@ const History = () => {
 
   const handleNextPage = () => { if (currentPage < totalPages) setCurrentPage(currentPage + 1); };
   const handlePrevPage = () => { if (currentPage > 1) setCurrentPage(currentPage - 1); };
+
+  const groupedItems = currentItems.reduce((acc, item) => {
+    const label = getGroupLabel(item.createdAt);
+    if (!acc[label]) acc[label] = [];
+    acc[label].push(item);
+    return acc;
+  }, {});
+
+  const groupOrder = ["Today", "Yesterday", "Last 7 Days", "Earlier", "Earlier Messages"];
 
   return (
     <div style={{ flex: 1, padding: '2rem', maxWidth: '1000px', width: '100%', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -99,7 +124,7 @@ const History = () => {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '4rem 0' }}><span className="spinner" style={{ width: '40px', height: '40px' }}></span></div>
         ) : currentItems.length === 0 ? (
@@ -109,44 +134,58 @@ const History = () => {
             <p>Try a different search term or start a new chat.</p>
           </div>
         ) : (
-          <AnimatePresence initial={false}>
-            {currentItems.map((item, index) => (
-              <motion.div 
-                key={item._id?.toString() || index}
-                className="glass-panel"
-                style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.2)', color: 'var(--primary-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <User size={20} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>You Asked</h4>
-                    <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt || "No prompt text found"}</p>
-                  </div>
+          groupOrder.map(label => {
+            if (!groupedItems[label]) return null;
+            return (
+              <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                   <span style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-accent)', textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</span>
+                   <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, rgba(99,102,241,0.2), transparent)' }}></div>
                 </div>
-
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
-                  <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16,185,129,0.2)', color: 'var(--secondary-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    <Bot size={20} />
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>GenBot Responded</h4>
-                    <div style={{ color: 'var(--text-main)', opacity: 0.9, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                      <div className="markdown-body">
-                        <ReactMarkdown>
-                          {(item.textAnswer || "").toString()}
-                        </ReactMarkdown>
+                <AnimatePresence initial={false}>
+                  {groupedItems[label].map((item, index) => (
+                    <motion.div 
+                      key={item._id?.toString() || index}
+                      className="glass-panel"
+                      style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(99,102,241,0.2)', color: 'var(--primary-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <User size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
+                             <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px' }}>You Asked</h4>
+                             {item.createdAt && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
+                          </div>
+                          <p style={{ fontSize: '1.1rem', fontWeight: 500 }}>{item.textPrompt || "No prompt text found"}</p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(16,185,129,0.2)', color: 'var(--secondary-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <Bot size={20} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <h4 style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '0.3rem' }}>GenBot Responded</h4>
+                          <div style={{ color: 'var(--text-main)', opacity: 0.9, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            <div className="markdown-body">
+                              <ReactMarkdown>
+                                {(item.textAnswer || "").toString()}
+                              </ReactMarkdown>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            );
+          })
         )}
       </div>
 

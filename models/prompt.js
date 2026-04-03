@@ -14,8 +14,7 @@ const promptSchema = new mongoose.Schema({
         ref: "User",
         required:true
     }
-
-});
+}, { timestamps: true });
 
 const Prompt = mongoose.model("Prompt", promptSchema);
 module.exports = Prompt;
