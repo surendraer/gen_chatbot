@@ -2,7 +2,11 @@ const mongoose = require("mongoose");
 require("dotenv").config();
 const mongoUrl = process.env.MONGO_URL;
 
-mongoose.connect(mongoUrl);
+// Reject the promise so the crash is visible, rather than silently hanging
+mongoose.connect(mongoUrl).catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1);
+});
 
 const db = mongoose.connection;
 
@@ -15,7 +19,7 @@ db.on("disconnected", () => {
 });
 
 db.on("error", (error) => {
-    console.log("Error occured during connecting the database: " + error);
+    console.error("Database error:", error);
 });
 
 module.exports = db;

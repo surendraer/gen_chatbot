@@ -115,12 +115,12 @@ router.post("/password/reset", jwtAuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
         const { currentPassword, newPassword } = req.body;
-        if (currentPassword.trim() == "" || newPassword.trim() == "") {
+        if (!currentPassword || !newPassword || currentPassword.trim() === '' || newPassword.trim() === '') {
             return res.status(400).json({
                 success: false,
                 message: "password field cant be empty"
-            })
-        };
+            });
+        }
         if (
             newPassword.length < 8 ||
             !/[A-Z]/.test(newPassword) ||
@@ -224,14 +224,17 @@ router.delete("/profile/delete", jwtAuthMiddleware, async (req, res) => {
     try {
         const userId = req.user.id;
         const response = await User.findByIdAndDelete(userId);
+        if (!response) {
+            return res.status(404).json({ success: false, message: "user not found" });
+        }
+        // Never return the deleted document — it contains the hashed password
         res.status(200).json({
             success: true,
-            message: "user deleted successfully",
-            data: response
-        })
+            message: "user deleted successfully"
+        });
     } catch (error) {
+        console.error("Profile delete error:", error);
         res.status(500).json({ success: false, message: "internal server error" });
-
     }
 })
 
@@ -241,10 +244,11 @@ router.delete("/profile/delete", jwtAuthMiddleware, async (req, res) => {
 router.post("/login", async (req, res) => {
     try {
         const { userName, password } = req.body;
-        if (!userName.trim() || !password.trim()) {
+        if (!userName || !password || !userName.trim() || !password.trim()) {
             return res.status(400).json({ success: false, message: "invalid login credentials" });
         }
-        const user = await User.findOne({ userName: userName });
+        // Trim but preserve case (usernames are case-sensitive in the schema)
+        const user = await User.findOne({ userName: userName.trim() });
 
         if (!user) {
             return res.status(401).json({ success: false, message: "User not found" });
