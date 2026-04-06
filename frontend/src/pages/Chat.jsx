@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User as UserIcon, Mic, MicOff, Copy, Check } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Mic, MicOff, Copy, Check, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { AuthContext } from '../context/AuthContext';
 
@@ -174,12 +174,20 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [voiceTranscript, setVoiceTranscript] = useState('');
+  const [voiceError, setVoiceError] = useState('');
+  const [voiceSupported] = useState(
+    () => !!(window.SpeechRecognition || window.webkitSpeechRecognition)
+  );
 
   const messagesEndRef = useRef(null);
   const loadingRef = useRef(false);
   const recognitionRef = useRef(null);
+  const finalTranscriptRef = useRef('');
+  const interimTranscriptRef = useRef('');
+  const isListeningRef = useRef(false);
 
   useEffect(() => { loadingRef.current = loading; }, [loading]);
+  useEffect(() => { isListeningRef.current = isListening; }, [isListening]);
 
   // Auto-scroll
   useEffect(() => {
@@ -187,7 +195,7 @@ const Chat = () => {
   }, [messages, loading]);
 
   // ── Send message ──────────────────────────────────────────────────────────
-  const sendMessage = async (text) => {
+  const sendMessage = useCallback(async (text) => {
     const userMsg = (text || '').trim();
     if (!userMsg || loadingRef.current) return;
 
@@ -197,6 +205,7 @@ const Chat = () => {
 
     setInput('');
     setVoiceTranscript('');
+    setVoiceError('');
     setLoading(true);
     loadingRef.current = true;
 
@@ -254,52 +263,62 @@ const Chat = () => {
       setLoading(false);
       loadingRef.current = false;
     }
-  };
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     sendMessage(input);
   };
 
-  // ── Voice input ───────────────────────────────────────────────────────────
-  const startListening = () => {
+  // ── Voice input (robust Web Speech API) ──────────────────────────────────
+  const createRecognition = useCallback(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      alert('Voice input is not supported in this browser.\nPlease use Google Chrome or Microsoft Edge.');
+    if (!SR) return null;
+
+    const recognition = new SR();
+    recognition.lang = navigator.language || 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;       // keep mic open until user clicks stop
+    recognition.maxAlternatives = 1;
+    return recognition;
+  }, []);
+
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch {}
+    }
+  }, []);
+
+  const startListening = useCallback(() => {
+    if (!voiceSupported) {
+      setVoiceError('Voice input is not supported in your browser. Try Chrome or Edge.');
       return;
     }
 
-    // If we already have a running recognition — stop it first
+    // Abort any existing session cleanly
     if (recognitionRef.current) {
       try { recognitionRef.current.abort(); } catch {}
       recognitionRef.current = null;
     }
 
-    const recognition = new SR();
-    recognition.lang = 'en-US';
-    recognition.interimResults = true;
-    // continuous:false — Chrome finalizes results before firing onend
-    // continuous:true often ends before isFinal fires, giving empty transcript
-    recognition.continuous = false;
-    recognition.maxAlternatives = 1;
+    finalTranscriptRef.current = '';
+    interimTranscriptRef.current = '';
+    setVoiceTranscript('');
+    setVoiceError('');
+
+    const recognition = createRecognition();
+    if (!recognition) return;
     recognitionRef.current = recognition;
 
-    // Track BOTH final and interim separately
-    // onend uses whichever is available (final preferred, interim as fallback)
-    let finalTranscript = '';
-    let interimTranscript = '';
-
     recognition.onstart = () => {
-      console.log('[Voice] Started');
       setIsListening(true);
-      setVoiceTranscript('');
       setInput('');
     };
 
     recognition.onresult = (event) => {
       let final = '';
       let interim = '';
-      for (let i = 0; i < event.results.length; i++) {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
         const r = event.results[i];
         if (r.isFinal) {
           final += r[0].transcript;
@@ -307,45 +326,54 @@ const Chat = () => {
           interim += r[0].transcript;
         }
       }
-      // Store BOTH — we'll use finalTranscript in onend, with interimTranscript as backup
-      finalTranscript = final;
-      interimTranscript = interim;
-      const display = (final + ' ' + interim).trim();
-      console.log('[Voice] Transcript (final:', JSON.stringify(final), 'interim:', JSON.stringify(interim) + ')');
+      // Accumulate finals; replace interim
+      finalTranscriptRef.current += final;
+      interimTranscriptRef.current = interim;
+      const display = (finalTranscriptRef.current + ' ' + interim).trim();
       setVoiceTranscript(display);
       setInput(display);
     };
 
     recognition.onerror = (event) => {
       console.error('[Voice] Error:', event.error);
-      if (event.error === 'not-allowed') {
-        alert('Microphone access denied. Please allow microphone access in your browser settings and try again.');
-      } else if (event.error === 'no-speech') {
-        // User didn't speak — just stop quietly
+      // 'no-speech' is expected when user pauses — restart silently
+      if (event.error === 'no-speech') return;
+
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        setVoiceError('Microphone access denied. Click the 🔒 icon in the address bar and allow microphone access, then try again.');
       } else if (event.error === 'network') {
-        alert('Voice recognition requires an internet connection.');
+        setVoiceError('Speech recognition requires an internet connection.');
+      } else if (event.error === 'aborted') {
+        // Intentional stop — no error to show
+      } else {
+        setVoiceError(`Voice error: ${event.error}. Try clicking the mic button again.`);
       }
-      // Don't stop listening on transient errors like 'no-speech'
-      if (event.error !== 'no-speech') {
-        setIsListening(false);
-        recognitionRef.current = null;
-      }
+      setIsListening(false);
+      recognitionRef.current = null;
     };
 
     recognition.onend = () => {
-      // Use final transcript, fall back to interim if final is empty
-      // (Chrome sometimes ends before issuing isFinal=true)
-      const captured = (finalTranscript || interimTranscript).trim();
-      console.log('[Voice] Ended. Final:', JSON.stringify(finalTranscript), '| Interim:', JSON.stringify(interimTranscript), '| Using:', JSON.stringify(captured));
+      // If still "listening" (not manually stopped), auto-restart for continuity
+      if (isListeningRef.current) {
+        // User hasn't clicked stop — restart to keep mic open
+        try {
+          recognitionRef.current = createRecognition();
+          if (!recognitionRef.current) return;
+          // Reattach same handlers via recursive call approach
+          recognition.onend = null; // prevent double-fire
+          startListeningSession(recognitionRef.current);
+        } catch {
+          setIsListening(false);
+        }
+        return;
+      }
+      // User clicked stop: submit what we have
+      const captured = (finalTranscriptRef.current + ' ' + interimTranscriptRef.current).trim();
       setIsListening(false);
       recognitionRef.current = null;
-
       if (captured) {
-        setTimeout(() => {
-          sendMessage(captured);
-        }, 80);
+        setTimeout(() => sendMessage(captured), 80);
       } else {
-        // Nothing was captured — clear the transcript display
         setVoiceTranscript('');
       }
     };
@@ -356,18 +384,51 @@ const Chat = () => {
       console.error('[Voice] Failed to start:', err);
       setIsListening(false);
       recognitionRef.current = null;
+      setVoiceError('Could not start the microphone. Please try again.');
     }
-  };
+  }, [voiceSupported, createRecognition, sendMessage]);
 
-  const stopListening = () => {
-    if (recognitionRef.current) {
-      try { recognitionRef.current.stop(); } catch {}
-      // onend will fire and handle submission
-    }
-  };
+  // Inner helper: attach events to a fresh recognition instance and start
+  const startListeningSession = useCallback((recognition) => {
+    recognition.lang = navigator.language || 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      let final = '';
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const r = event.results[i];
+        if (r.isFinal) final += r[0].transcript;
+        else interim += r[0].transcript;
+      }
+      finalTranscriptRef.current += final;
+      interimTranscriptRef.current = interim;
+      const display = (finalTranscriptRef.current + ' ' + interim).trim();
+      setVoiceTranscript(display);
+      setInput(display);
+    };
+    recognition.onerror = (event) => {
+      if (event.error === 'no-speech' || event.error === 'aborted') return;
+      setVoiceError(`Voice error: ${event.error}`);
+      setIsListening(false);
+    };
+    recognition.onend = () => {
+      if (!isListeningRef.current) {
+        const captured = (finalTranscriptRef.current + ' ' + interimTranscriptRef.current).trim();
+        setIsListening(false);
+        recognitionRef.current = null;
+        if (captured) setTimeout(() => sendMessage(captured), 80);
+        else setVoiceTranscript('');
+      }
+    };
+    try { recognition.start(); } catch {}
+  }, [sendMessage]);
 
   const toggleListening = () => {
     if (isListening) {
+      isListeningRef.current = false; // signal intentional stop BEFORE calling stop()
       stopListening();
     } else {
       startListening();
@@ -377,6 +438,7 @@ const Chat = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
+      isListeningRef.current = false;
       if (recognitionRef.current) {
         try { recognitionRef.current.abort(); } catch {}
       }
@@ -485,7 +547,7 @@ const Chat = () => {
       </div>
 
       {/* Voice transcript preview (shown above input while listening) */}
-      {isListening && voiceTranscript && (
+      {isListening && (
         <div style={{
           padding: '8px 16px', marginBottom: '6px',
           background: 'rgba(239,68,68,0.08)',
@@ -497,9 +559,31 @@ const Chat = () => {
           <span style={{
             width: '8px', height: '8px', borderRadius: '50%',
             background: '#ef4444', display: 'inline-block',
-            animation: 'pulse-danger 1.5s infinite',
+            animation: 'pulse-danger 1.5s infinite', flexShrink: 0,
           }} />
-          <span style={{ fontStyle: 'italic' }}>"{voiceTranscript}"</span>
+          {voiceTranscript
+            ? <span style={{ fontStyle: 'italic', flex: 1 }}>"{voiceTranscript}"</span>
+            : <span style={{ opacity: 0.8 }}>Listening… start speaking. Click the mic again to stop &amp; send.</span>
+          }
+        </div>
+      )}
+
+      {/* Voice error banner */}
+      {voiceError && !isListening && (
+        <div style={{
+          padding: '8px 16px', marginBottom: '6px',
+          background: 'rgba(239,68,68,0.08)',
+          border: '1px solid rgba(239,68,68,0.3)',
+          borderRadius: 'var(--border-radius-sm)',
+          fontSize: '0.85rem', color: '#fca5a5',
+          display: 'flex', alignItems: 'flex-start', gap: '8px',
+        }}>
+          <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <span>{voiceError}</span>
+          <button
+            onClick={() => setVoiceError('')}
+            style={{ marginLeft: 'auto', background: 'none', color: '#fca5a5', fontSize: '1rem', cursor: 'pointer', flexShrink: 0 }}
+          >✕</button>
         </div>
       )}
 
@@ -512,7 +596,7 @@ const Chat = () => {
           placeholder={isListening ? '🎤 Listening… speak now' : 'Message GenBot...'}
           className="input-base"
           style={{
-            padding: '18px 24px', paddingRight: '116px',
+            padding: '18px 24px', paddingRight: voiceSupported ? '116px' : '72px',
             borderRadius: 'var(--border-radius-xl)',
             fontSize: '1.05rem',
             background: 'rgba(15,23,42,0.8)',
@@ -524,24 +608,26 @@ const Chat = () => {
         />
         <div style={{
           position: 'absolute', right: '12px', top: '50%',
-          transform: 'translateY(-50%)', display: 'flex', gap: '8px',
+          transform: 'translateY(-50%)', display: 'flex', gap: '8px', alignItems: 'center',
         }}>
-          <button
-            type="button"
-            onClick={toggleListening}
-            title={isListening ? 'Stop listening' : 'Speak your message'}
-            style={{
-              background: isListening ? 'var(--danger)' : 'rgba(255,255,255,0.1)',
-              color: 'white', padding: '10px', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-              boxShadow: isListening ? '0 0 18px rgba(239,68,68,0.55)' : 'none',
-              animation: isListening ? 'pulse-danger 1.5s infinite' : 'none',
-            }}
-          >
-            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
-          </button>
+          {voiceSupported && (
+            <button
+              type="button"
+              onClick={toggleListening}
+              title={isListening ? 'Stop & send' : 'Speak your message'}
+              style={{
+                background: isListening ? 'var(--danger)' : 'rgba(255,255,255,0.1)',
+                color: 'white', padding: '10px', borderRadius: '50%',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
+                boxShadow: isListening ? '0 0 18px rgba(239,68,68,0.55)' : 'none',
+                animation: isListening ? 'pulse-danger 1.5s infinite' : 'none',
+              }}
+            >
+              {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+            </button>
+          )}
           <button
             type="submit"
             disabled={!input.trim() || loading}
