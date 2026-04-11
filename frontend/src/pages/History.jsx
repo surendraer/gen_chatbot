@@ -24,10 +24,8 @@ const History = () => {
         if (data && data.success && Array.isArray(data.data)) {
           // Group by conversation
           const grouped = {};
-          // Reverse so newest prompts come first
-          const prompts = [...data.data].reverse();
           
-          prompts.forEach(p => {
+          data.data.forEach(p => {
             const cid = p.conversationId || p._id;
             if (!grouped[cid]) {
               grouped[cid] = {
@@ -38,17 +36,16 @@ const History = () => {
                 updatedAt: p.createdAt // Track latest message time
               };
             }
-            // Insert at the beginning to keep chronological order within the conversation since we reversed the main array
-            grouped[cid].messages.unshift({
+            // Append chronologically
+            grouped[cid].messages.push({
               prompt: p.textPrompt,
               answer: p.textAnswer,
               id: p._id,
               createdAt: p.createdAt
             });
             // Update the conversation's updatedAt if this prompt is newer
-            if (new Date(p.createdAt) > new Date(grouped[cid].updatedAt)) {
-               grouped[cid].updatedAt = p.createdAt;
-            }
+            // (technically since we process chronologically, the last one processed is the newest)
+            grouped[cid].updatedAt = p.createdAt;
           });
 
           // Sort conversations by most recently updated

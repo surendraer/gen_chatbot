@@ -208,16 +208,15 @@ const Chat = () => {
     try {
       const { data } = await api.get('/prompt/history');
       if (data && data.success && Array.isArray(data.data)) {
-        // Group by conversationId
+        // Group by conversationId (processing chronologically)
         const grouped = {};
         
-        // Process oldest to newest so first prompt becomes title
         data.data.forEach(p => {
           const cid = p.conversationId || p._id; // Fallback to prompt id if no conv ID
           if (!grouped[cid]) {
             grouped[cid] = {
               id: cid,
-              title: p.textPrompt, // The oldest (first) prompt sets the title
+              title: p.textPrompt, // Set to FIRST prompt chronologically
               messages: [],
               createdAt: p.createdAt,
               updatedAt: p.createdAt
@@ -229,11 +228,10 @@ const Chat = () => {
             id: p._id,
             createdAt: p.createdAt
           });
-          // Update the updatedAt time for the conversation
           grouped[cid].updatedAt = p.createdAt;
         });
 
-        // Convert to array and sort by most recently updated
+        // Convert to array and sort by latest activity
         const sortedList = Object.values(grouped).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         setConversationsList(sortedList);
         return grouped;
@@ -253,7 +251,7 @@ const Chat = () => {
     if (conv) {
       // Reconstruct messages array from the conversation's grouped messages
       const newMessages = [];
-      
+      // They are already in chronological order
       conv.messages.forEach(msg => {
         newMessages.push({ id: `user-${msg.id}`, text: msg.prompt, sender: 'user' });
         newMessages.push({ id: `bot-${msg.id}`, text: msg.answer, sender: 'bot' });
@@ -492,7 +490,7 @@ const Chat = () => {
   }, []);
 
   return (
-    <div style={{ flex: 1, display: 'flex', height: 'calc(100vh - 80px)', maxHeight: 'calc(100vh - 80px)', overflow: 'hidden', position: 'relative', margin: 0, padding: 0 }}>
+    <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden', position: 'relative', margin: 0, padding: 0 }}>
       
       {/* Sidebar Toggle Button for Mobile */}
       {!isSidebarOpen && (
