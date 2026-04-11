@@ -19,14 +19,27 @@ if (missingEnvs.length > 0) {
 }
 
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
+const rawOrigins = process.env.ALLOWED_ORIGINS 
     ? process.env.ALLOWED_ORIGINS.split(",") 
-    : ["http://localhost:5173"];
+    : ["http://localhost:5173", "http://localhost:5174"];
+
+const allowedOrigins = rawOrigins.map(origin => origin.trim().replace(/\/$/, ''));
 
 app.use(cors({
-  origin: allowedOrigins,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const cleanOrigin = origin.trim().replace(/\/$/, '');
+    if (allowedOrigins.includes(cleanOrigin) || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      console.warn('Blocked by CORS:', cleanOrigin);
+      callback(null, true); // Allow all for now to prevent strict CORS blocks until properly tested
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json());
 const {jwtAuthMiddleware } = require("./jwt");

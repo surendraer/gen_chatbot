@@ -216,7 +216,9 @@ const Chat = () => {
     ]);
 
     try {
-      const resp = await fetch(`${import.meta.env.VITE_API_URL}/prompt/`, {
+      const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+      const cleanApiUrl = rawApiUrl.replace(/\/$/, '');
+      const resp = await fetch(`${cleanApiUrl}/prompt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
