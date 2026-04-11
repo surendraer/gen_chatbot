@@ -12,7 +12,7 @@ const client = new OpenAI({
 
 router.post("/", async (req, res) => {
     try {
-        const { prompt } = req.body;
+        const { prompt, conversationId, history = [] } = req.body;
         const userId = req.user.id;
         
         if (!prompt) {
@@ -27,9 +27,12 @@ router.post("/", async (req, res) => {
         res.flushHeaders(); // Flush headers immediately so browser knows stream has started
 
         // 2. Start the AI Stream
+        // Construct message history for context
+        const messages = [...history, { role: "user", content: prompt }];
+        
         const stream = await client.chat.completions.create({
             model: "llama-3.3-70b-versatile",
-            messages: [{ role: "user", content: prompt }],
+            messages: messages,
             stream: true,
         });
 
@@ -51,7 +54,8 @@ router.post("/", async (req, res) => {
         const newPrompt = new Prompt({
             textPrompt: prompt,
             textAnswer: fullAnswer,
-            userId: userId
+            userId: userId,
+            conversationId: conversationId
         });
         await newPrompt.save();
 

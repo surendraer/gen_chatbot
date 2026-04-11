@@ -13,6 +13,10 @@ const promptSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         required:true
+    },
+    conversationId: {
+        type: String,
+        required: false
     }
 }, { timestamps: true });
 
