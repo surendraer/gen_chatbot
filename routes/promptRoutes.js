@@ -23,11 +23,8 @@ router.post("/", async (req, res) => {
         res.setHeader("Content-Type", "text/event-stream");
         res.setHeader("Cache-Control", "no-cache");
         res.setHeader("Connection", "keep-alive");
-        // Disable nginx buffering on Render — critical for SSE to work in production
-        res.setHeader("X-Accel-Buffering", "no");
-
-        // Flush headers immediately so the browser knows streaming has started
-        if (res.flush) res.flush();
+        res.setHeader("X-Accel-Buffering", "no"); // Disable Render/nginx proxy buffering
+        res.flushHeaders(); // Flush headers immediately so browser knows stream has started
 
         // 2. Start the AI Stream
         const stream = await client.chat.completions.create({
@@ -45,8 +42,8 @@ router.post("/", async (req, res) => {
                 fullAnswer += content;
                 // SSE format: data: { JSON string }\n\n
                 res.write(`data: ${JSON.stringify({ text: content })}\n\n`);
-                // Force flush each chunk through nginx proxy
-                if (res.flush) res.flush();
+                // Force flush after every chunk so Render proxy doesn't buffer
+                if (typeof res.flush === 'function') res.flush();
             }
         }
 
