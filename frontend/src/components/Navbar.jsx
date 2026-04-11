@@ -17,12 +17,13 @@ const Navbar = () => {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      padding: '1.2rem 2rem',
+      padding: '0 2rem',
+      height: '60px',
+      flexShrink: 0,
       background: 'rgba(15, 23, 42, 0.4)',
       backdropFilter: 'blur(10px)',
       borderBottom: '1px solid rgba(255,255,255,0.05)',
-      position: 'sticky',
-      top: 0,
+      position: 'relative',
       zIndex: 100
     }}>
       <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.5rem', fontWeight: 'bold' }}>

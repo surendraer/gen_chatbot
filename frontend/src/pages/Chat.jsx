@@ -490,7 +490,7 @@ const Chat = () => {
   }, []);
 
   return (
-    <div style={{ flex: 1, display: 'flex', height: '100%', overflow: 'hidden', position: 'relative', margin: 0, padding: 0 }}>
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', position: 'relative' }}>
       
       {/* Sidebar Toggle Button for Mobile */}
       {!isSidebarOpen && (
@@ -512,11 +512,13 @@ const Chat = () => {
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
             style={{
               width: '280px',
+              minWidth: '280px',
               height: '100%',
               background: 'rgba(9, 9, 11, 0.95)',
               borderRight: '1px solid rgba(255,255,255,0.05)',
               display: 'flex',
               flexDirection: 'column',
+              overflow: 'hidden',
               position: window.innerWidth <= 768 ? 'absolute' : 'relative',
               zIndex: 20,
               boxShadow: window.innerWidth <= 768 ? '5px 0 15px rgba(0,0,0,0.5)' : 'none'
@@ -590,12 +592,13 @@ const Chat = () => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, position: 'relative' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden' }}>
         
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
-          height: '100%', maxWidth: '900px', width: '100%',
-          margin: '0 auto', padding: '1rem', paddingTop: window.innerWidth <= 768 && !isSidebarOpen ? '60px' : '1rem'
+          height: '100%', width: '100%',
+          padding: '1rem 2rem', paddingTop: window.innerWidth <= 768 && !isSidebarOpen ? '60px' : '1rem',
+          overflow: 'hidden'
         }}>
           {/* Messages Area */}
           <div style={{
@@ -651,7 +654,7 @@ const Chat = () => {
           </div>
 
           {/* Input area */}
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative', flexShrink: 0 }}>
             {isListening && (
               <div style={{ padding: '8px 16px', marginBottom: '6px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--border-radius-sm)', fontSize: '0.9rem', color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse-danger 1.5s infinite', flexShrink: 0 }} />
