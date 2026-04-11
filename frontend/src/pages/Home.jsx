@@ -28,7 +28,7 @@ const Home = () => {
           <span className="title-gradient">GenBot AI</span>
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '1.25rem', maxWidth: '600px', margin: '0 auto 3rem auto', lineHeight: 1.6 }}>
-          Experience the next generation of conversational AI. Fast, secure, and beautiful. Powered by Google Gemini.
+          Experience the next generation of conversational AI. Fast, secure, and beautiful. Powered by Llama 3.3 70B.
         </p>
 
         <motion.button 
@@ -53,7 +53,7 @@ const Home = () => {
             <Zap size={24} />
           </div>
           <h3 style={{ fontSize: '1.2rem' }}>Lightning Fast</h3>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Powered by Gemini 2.0 Flash for instant, high-quality responses.</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Powered by Llama 3.3 70B via Groq for instant, high-quality responses with real-time streaming.</p>
         </div>
 
         <div className="glass-panel" style={{ padding: '2rem', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '1rem' }}>

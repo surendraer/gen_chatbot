@@ -202,7 +202,7 @@ router.put("/profile/update", jwtAuthMiddleware, async(req,res)=>{
             }
         }
 
-        const response = await User.findByIdAndUpdate(userId, safeData, { new: true, runValidators: true });
+        const response = await User.findByIdAndUpdate(userId, safeData, { returnDocument: 'after', runValidators: true });
         
         if (!response) {
             return res.status(404).json({ success: false, message: "User not found" });
