@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../api';
 

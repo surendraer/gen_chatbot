@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 import axios from 'axios';
 
 const rawApiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';

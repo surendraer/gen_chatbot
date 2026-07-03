@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
@@ -6,6 +7,12 @@ import { UserPlus, Check, X, AlertCircle } from 'lucide-react';
 import api from '../api';
 
 const Signup = () => {
+  // Navigation & Step Control
+  const [step, setStep] = useState('register'); // 'register' | 'verify'
+  const [registeredEmail, setRegisteredEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [cooldown, setCooldown] = useState(0);
+
   const [formData, setFormData] = useState({ 
     name: '', userName: '', email: '', mobile: '', password: '' 
   });
@@ -27,6 +34,14 @@ const Signup = () => {
     number: false,
     special: false
   });
+
+  // Resend OTP Cooldown timer
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setTimeout(() => setCooldown(cooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [cooldown]);
 
   // Debounced Username availability check
   useEffect(() => {
@@ -84,7 +99,7 @@ const Signup = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSignupSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
@@ -109,13 +124,49 @@ const Signup = () => {
     try {
       const { data } = await api.post('/user/signup', formData);
       if (data.success) {
-        login(data.data.token, data.data.response);
-        navigate('/chat');
+        setRegisteredEmail(formData.email);
+        setStep('verify');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed. Check inputs.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+      setError('Please enter a valid 6-digit verification code.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await api.post('/user/verify-otp', { email: registeredEmail, otp });
+      if (data.success) {
+        login(data.data.token, data.data.response);
+        navigate('/chat');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Incorrect or expired verification code.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (cooldown > 0) return;
+    setError('');
+    try {
+      const { data } = await api.post('/user/resend-otp', { email: registeredEmail });
+      if (data.success) {
+        setCooldown(60); // 60s cooldown limit
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to resend code.');
     }
   };
 
@@ -148,234 +199,369 @@ const Signup = () => {
         style={{ 
           padding: '2rem 2.5rem', 
           width: '100%', 
-          maxWidth: '680px', // Wider card layout for horizontal alignment
+          maxWidth: step === 'verify' ? '420px' : '680px', // Shrink card for compact OTP layout
           backgroundColor: 'var(--color-canvas)',
           border: '1px solid var(--color-hairline-soft)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.02)'
+          boxShadow: '0 4px 20px rgba(0,0,0,0.02)',
+          transition: 'max-width var(--transition-medium)'
         }}
         initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <div style={{ 
-            backgroundColor: 'var(--color-ink)', 
-            color: 'var(--color-on-primary)', 
-            padding: '12px', 
-            borderRadius: 'var(--rounded-full)', 
-            display: 'inline-flex', 
-            marginBottom: '0.75rem' 
-          }}>
-            <UserPlus size={24} />
-          </div>
-          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-mute)', display: 'block' }}>
-            REGISTRATION GATEWAY
-          </span>
-          <h2 className="heading-md" style={{ textTransform: 'uppercase', marginTop: '0.25rem', fontSize: '20px' }}>
-            Create Account
-          </h2>
-        </div>
-
-        <AnimatePresence>
-          {error && (
-            <motion.div 
-              initial={{ height: 0, opacity: 0 }} 
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              style={{ overflow: 'hidden' }}
-            >
+        {step === 'register' ? (
+          <>
+            {/* ── REGISTRATION FORM ────────────────────────────────────────── */}
+            <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
               <div style={{ 
-                backgroundColor: 'rgba(211,0,5,0.04)', 
-                color: 'var(--color-sale)', 
+                backgroundColor: 'var(--color-ink)', 
+                color: 'var(--color-on-primary)', 
                 padding: '12px', 
-                border: '1px solid rgba(211,0,5,0.15)',
-                fontSize: '13px', 
-                textAlign: 'center', 
-                marginBottom: '1.25rem',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
+                borderRadius: 'var(--rounded-full)', 
+                display: 'inline-flex', 
+                marginBottom: '0.75rem' 
               }}>
-                <AlertCircle size={15} />
-                <span>{error}</span>
+                <UserPlus size={24} />
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Responsive Two-Column Grid for Horizontal Layout */}
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', 
-            gap: '1.25rem' 
-          }}>
-            {/* Full Name */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
-              <input 
-                type="text" 
-                className="input-base" 
-                placeholder="John Doe" 
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
-                required
-              />
+              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-mute)', display: 'block' }}>
+                REGISTRATION GATEWAY
+              </span>
+              <h2 className="heading-md" style={{ textTransform: 'uppercase', marginTop: '0.25rem', fontSize: '20px' }}>
+                Create Account
+              </h2>
             </div>
 
-            {/* Username */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Username</label>
-              <input 
-                type="text" 
-                className="input-base" 
-                placeholder="johndoe123" 
-                value={formData.userName}
-                onChange={(e) => setFormData({...formData, userName: e.target.value})}
-                style={{ 
-                  padding: '10px 16px', 
-                  fontSize: '14px', 
-                  height: '40px',
-                  borderColor: usernameStatus.available === true ? 'var(--color-success)' : usernameStatus.available === false ? 'var(--color-sale)' : 'transparent'
-                }}
-                required
-              />
-              {usernameStatus.message && (
-                <span style={{ 
-                  fontSize: '11px', 
-                  display: 'block', 
-                  marginTop: '4px',
-                  fontWeight: 500,
-                  color: usernameStatus.available === true ? 'var(--color-success)' : usernameStatus.available === false ? 'var(--color-sale)' : 'var(--color-mute)'
-                }}>
-                  {usernameStatus.message}
-                </span>
-              )}
-            </div>
-
-            {/* Email Address */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
-              <input 
-                type="email" 
-                className="input-base" 
-                placeholder="john@example.com" 
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
-                required
-              />
-            </div>
-
-            {/* Mobile Phone with country dropdown */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mobile Phone</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  style={{
-                    width: '100px',
-                    height: '40px',
-                    backgroundColor: 'var(--color-soft-cloud)',
-                    border: '1px solid transparent',
-                    borderRadius: 'var(--rounded-md)',
-                    color: 'var(--color-ink)',
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    padding: '0 8px',
-                    outline: 'none',
-                    cursor: 'pointer'
-                  }}
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{ overflow: 'hidden' }}
                 >
-                  {countries.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
-                </select>
+                  <div style={{ 
+                    backgroundColor: 'rgba(211,0,5,0.04)', 
+                    color: 'var(--color-sale)', 
+                    padding: '12px', 
+                    border: '1px solid rgba(211,0,5,0.15)',
+                    fontSize: '13px', 
+                    textAlign: 'center', 
+                    marginBottom: '1.25rem',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}>
+                    <AlertCircle size={15} />
+                    <span>{error}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleSignupSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', 
+                gap: '1.25rem' 
+              }}>
+                {/* Full Name */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Full Name</label>
+                  <input 
+                    type="text" 
+                    className="input-base" 
+                    placeholder="John Doe" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
+                    required
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Username</label>
+                  <input 
+                    type="text" 
+                    className="input-base" 
+                    placeholder="johndoe123" 
+                    value={formData.userName}
+                    onChange={(e) => setFormData({...formData, userName: e.target.value})}
+                    style={{ 
+                      padding: '10px 16px', 
+                      fontSize: '14px', 
+                      height: '40px',
+                      borderColor: usernameStatus.available === true ? 'var(--color-success)' : usernameStatus.available === false ? 'var(--color-sale)' : 'transparent'
+                    }}
+                    required
+                  />
+                  {usernameStatus.message && (
+                    <span style={{ 
+                      fontSize: '11px', 
+                      display: 'block', 
+                      marginTop: '4px',
+                      fontWeight: 500,
+                      color: usernameStatus.available === true ? 'var(--color-success)' : usernameStatus.available === false ? 'var(--color-sale)' : 'var(--color-mute)'
+                    }}>
+                      {usernameStatus.message}
+                    </span>
+                  )}
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Email Address</label>
+                  <input 
+                    type="email" 
+                    className="input-base" 
+                    placeholder="john@example.com" 
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
+                    required
+                  />
+                </div>
+
+                {/* Mobile Phone */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mobile Phone</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      style={{
+                        width: '100px',
+                        height: '40px',
+                        backgroundColor: 'var(--color-soft-cloud)',
+                        border: '1px solid transparent',
+                        borderRadius: 'var(--rounded-md)',
+                        color: 'var(--color-ink)',
+                        fontSize: '13px',
+                        fontWeight: 600,
+                        padding: '0 8px',
+                        outline: 'none',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {countries.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
+                    </select>
+                    <input 
+                      type="text" 
+                      className="input-base" 
+                      placeholder="10-digit number" 
+                      value={formData.mobile}
+                      onChange={handleMobileChange}
+                      style={{ padding: '10px 16px', fontSize: '14px', height: '40px', flex: 1 }}
+                      required
+                    />
+                  </div>
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
+                  <input 
+                    type="password" 
+                    className="input-base" 
+                    placeholder="••••••••" 
+                    value={formData.password}
+                    onChange={(e) => setFormData({...formData, password: e.target.value})}
+                    style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
+                    required
+                  />
+                </div>
+
+                {/* Checklist */}
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  {formData.password.length > 0 ? (
+                    <div style={{ 
+                      padding: '10px 14px', 
+                      backgroundColor: 'var(--color-soft-cloud)', 
+                      border: '1px solid var(--color-hairline-soft)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      borderRadius: 'var(--rounded-md)'
+                    }}>
+                      <ReqItem met={passwordReqs.length} label="Min 8 characters" />
+                      <ReqItem met={passwordReqs.uppercase} label="At least 1 uppercase letter" />
+                      <ReqItem met={passwordReqs.lowercase} label="At least 1 lowercase letter" />
+                      <ReqItem met={passwordReqs.number} label="At least 1 number" />
+                      <ReqItem met={passwordReqs.special} label="At least 1 special character" />
+                    </div>
+                  ) : (
+                    <div style={{ 
+                      fontSize: '12px', 
+                      color: 'var(--color-mute)', 
+                      fontStyle: 'italic', 
+                      textAlign: 'center', 
+                      padding: '12px', 
+                      border: '1px dashed var(--color-hairline-soft)',
+                      borderRadius: 'var(--rounded-md)'
+                    }}>
+                      Enter password to check requirements
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={loading} 
+                style={{ 
+                  marginTop: '0.5rem', 
+                  width: '100%', 
+                  height: '42px',
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  textTransform: 'uppercase',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  borderRadius: 'var(--rounded-md)'
+                }}
+              >
+                {loading ? <span className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }}></span> : 'Register & Join'}
+              </button>
+            </form>
+
+            <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '13px', color: 'var(--color-mute)' }}>
+              Already registered? <Link to="/login" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>Sign In</Link>
+            </p>
+          </>
+        ) : (
+          <>
+            {/* ── OTP VERIFICATION FORM ──────────────────────────────────────── */}
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ 
+                backgroundColor: 'var(--color-ink)', 
+                color: 'var(--color-on-primary)', 
+                padding: '12px', 
+                borderRadius: 'var(--rounded-full)', 
+                display: 'inline-flex', 
+                marginBottom: '0.75rem' 
+              }}>
+                <Check size={24} />
+              </div>
+              <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-mute)', display: 'block' }}>
+                SECURITY GATEWAY
+              </span>
+              <h2 className="heading-md" style={{ textTransform: 'uppercase', marginTop: '0.25rem', fontSize: '20px' }}>
+                Verify Your Email
+              </h2>
+            </div>
+
+            <p style={{ fontSize: '13px', color: 'var(--color-charcoal)', textAlign: 'center', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+              We sent a 6-digit verification code to <br />
+              <strong style={{ color: 'var(--color-ink)' }}>{registeredEmail}</strong>.<br />
+              It will expire in 10 minutes.
+            </p>
+
+            <AnimatePresence mode="wait">
+              {error && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div style={{ 
+                    backgroundColor: 'rgba(211,0,5,0.04)', 
+                    color: 'var(--color-sale)', 
+                    padding: '12px', 
+                    border: '1px solid rgba(211,0,5,0.15)',
+                    fontSize: '13px', 
+                    textAlign: 'center', 
+                    marginBottom: '1.25rem',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px'
+                  }}>
+                    <AlertCircle size={15} />
+                    <span>{error}</span>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verification Code</label>
                 <input 
                   type="text" 
+                  maxLength={6}
                   className="input-base" 
-                  placeholder="10-digit number" 
-                  value={formData.mobile}
-                  onChange={handleMobileChange}
-                  style={{ padding: '10px 16px', fontSize: '14px', height: '40px', flex: 1 }}
+                  placeholder="123456" 
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))} // numeric only
+                  style={{ 
+                    padding: '10px 16px', 
+                    fontSize: '20px', 
+                    height: '46px', 
+                    textAlign: 'center', 
+                    letterSpacing: '0.35em', 
+                    fontWeight: 700,
+                    borderRadius: 'var(--rounded-md)'
+                  }}
                   required
                 />
               </div>
-            </div>
 
-            {/* Password */}
-            <div>
-              <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
-              <input 
-                type="password" 
-                className="input-base" 
-                placeholder="••••••••" 
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                style={{ padding: '10px 16px', fontSize: '14px', height: '40px' }}
-                required
-              />
-            </div>
-
-            {/* Password Requirement Ticking Checklist */}
-            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              {formData.password.length > 0 ? (
-                <div style={{ 
-                  padding: '10px 14px', 
-                  backgroundColor: 'var(--color-soft-cloud)', 
-                  border: '1px solid var(--color-hairline-soft)',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
+              <button 
+                type="submit" 
+                className="btn-primary" 
+                disabled={loading} 
+                style={{ 
+                  width: '100%', 
+                  height: '42px',
+                  display: 'flex', 
+                  justifyContent: 'center',
+                  textTransform: 'uppercase',
+                  fontSize: '14px',
+                  fontWeight: 600,
                   borderRadius: 'var(--rounded-md)'
-                }}>
-                  <ReqItem met={passwordReqs.length} label="Min 8 characters" />
-                  <ReqItem met={passwordReqs.uppercase} label="At least 1 uppercase letter" />
-                  <ReqItem met={passwordReqs.lowercase} label="At least 1 lowercase letter" />
-                  <ReqItem met={passwordReqs.number} label="At least 1 number" />
-                  <ReqItem met={passwordReqs.special} label="At least 1 special character" />
-                </div>
-              ) : (
-                <div style={{ 
-                  fontSize: '12px', 
-                  color: 'var(--color-mute)', 
-                  fontStyle: 'italic', 
-                  textAlign: 'center', 
-                  padding: '12px', 
-                  border: '1px dashed var(--color-hairline-soft)',
-                  borderRadius: 'var(--rounded-md)'
-                }}>
-                  Enter password to check requirements
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <button 
-            type="submit" 
-            className="btn-primary" 
-            disabled={loading} 
-            style={{ 
-              marginTop: '0.5rem', 
-              width: '100%', 
-              height: '42px',
-              display: 'flex', 
-              justifyContent: 'center',
-              textTransform: 'uppercase',
-              fontSize: '14px',
-              fontWeight: 600,
-              borderRadius: 'var(--rounded-md)'
-            }}
-          >
-            {loading ? <span className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }}></span> : 'Register & Join'}
-          </button>
-        </form>
+                }}
+              >
+                {loading ? <span className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }}></span> : 'Verify & Continue'}
+              </button>
+            </form>
 
-        <p style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '13px', color: 'var(--color-mute)' }}>
-          Already registered? <Link to="/login" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>Sign In</Link>
-        </p>
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={cooldown > 0}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: cooldown > 0 ? 'var(--color-mute)' : 'var(--color-ink)',
+                  fontWeight: 600,
+                  fontSize: '13px',
+                  cursor: cooldown > 0 ? 'not-allowed' : 'pointer',
+                  textDecoration: 'underline'
+                }}
+              >
+                {cooldown > 0 ? `Resend Code in ${cooldown}s` : 'Resend Verification Code'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setStep('register')}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-mute)',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Back to Signup
+              </button>
+            </div>
+          </>
+        )}
       </motion.div>
     </div>
   );

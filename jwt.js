@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 const jwt = require("jsonwebtoken");
 
 const jwtAuthMiddleware = (req, res, next) => {

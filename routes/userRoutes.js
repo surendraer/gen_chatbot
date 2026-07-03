@@ -1,6 +1,8 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 const express = require("express");
 const User = require("../models/user");
 const { generateToken, jwtAuthMiddleware } = require("../jwt");
+const { sendVerificationEmail } = require("../utils/mailer");
 const router = express.Router();
 
 function toPublicUser(userData) {
@@ -101,23 +103,28 @@ router.post("/signup", async (req, res) => {
         data.mobile = mobile;
         data.password = password;
 
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        data.isVerified = false;
+        data.emailVerificationOtp = otp;
+        data.otpExpiresAt = otpExpiresAt;
+
         const newUser = new User(data);
         const response = await newUser.save();
 
-        const payload = {
-            id: response.id
-        };
+        try {
+            await sendVerificationEmail(email, otp);
+            console.log(`Verification email sent with OTP: ${otp}`);
+        } catch (mailError) {
+            console.error("Mailer error on signup:", mailError);
+        }
 
-        const token = generateToken(payload);
-
-        console.log("User registered successfully!!!");
+        console.log("User registered (unverified) successfully!!!");
         res.status(201).json({
             success: true,
-            message: "User Registered successfully",
-            data: {
-                response: toPublicUser(response),
-                token: token
-            }
+            message: "User registered. Please verify your email.",
+            email: email
         });
     } catch (error) {
         console.error("error in registering user :", error);
@@ -247,6 +254,89 @@ router.delete("/profile/delete", jwtAuthMiddleware, async (req, res) => {
     }
 })
 
+// verify otp
+router.post("/verify-otp", async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: "Email and OTP are required" });
+        }
+
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ success: false, message: "User is already verified" });
+        }
+
+        if (user.emailVerificationOtp !== otp) {
+            return res.status(400).json({ success: false, message: "Invalid verification code" });
+        }
+
+        if (user.otpExpiresAt < new Date()) {
+            return res.status(400).json({ success: false, message: "OTP has expired. Please request a new one." });
+        }
+
+        user.isVerified = true;
+        user.emailVerificationOtp = undefined;
+        user.otpExpiresAt = undefined;
+        await user.save();
+
+        // Login user immediately on successful verification
+        const payload = { id: user.id };
+        const token = generateToken(payload);
+
+        res.status(200).json({
+            success: true,
+            message: "Email verified successfully",
+            data: {
+                response: toPublicUser(user),
+                token: token
+            }
+        });
+    } catch (error) {
+        console.error("Error in verifying OTP:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
+// resend otp
+router.post("/resend-otp", async (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) {
+            return res.status(400).json({ success: false, message: "Email is required" });
+        }
+
+        const user = await User.findOne({ email: email.trim().toLowerCase() });
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ success: false, message: "User is already verified" });
+        }
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+        user.emailVerificationOtp = otp;
+        user.otpExpiresAt = otpExpiresAt;
+        await user.save();
+
+        await sendVerificationEmail(user.email, otp);
+
+        res.status(200).json({
+            success: true,
+            message: "Verification OTP resent to your email"
+        });
+    } catch (error) {
+        console.error("Error in resending OTP:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
 
 // login 
 
@@ -266,6 +356,10 @@ router.post("/login", async (req, res) => {
         const isPasswordMatch = await user.comparePassword(password)
         if (!isPasswordMatch) {
             return res.status(401).json({ success: false, message: "Invalid password" });
+        }
+
+        if (!user.isVerified) {
+            return res.status(403).json({ success: false, message: "Email is not verified. Please verify your email first.", email: user.email });
         }
 
         const payload =

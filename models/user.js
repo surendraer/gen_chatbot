@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
@@ -16,6 +17,18 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true
+    },
+    isVerified: {
+        type: Boolean,
+        default: false
+    },
+    emailVerificationOtp: {
+        type: String,
+        required: false
+    },
+    otpExpiresAt: {
+        type: Date,
+        required: false
     },
     mobile: {
         type: String,

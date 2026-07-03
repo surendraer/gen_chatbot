@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'

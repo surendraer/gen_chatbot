@@ -1,3 +1,4 @@
+// Production Launch v1.0.0 - Optimized AI Chatbot
 const mongoose = require("mongoose");
 
 const promptSchema = new mongoose.Schema({
