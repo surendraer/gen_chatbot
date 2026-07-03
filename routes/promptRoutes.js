@@ -82,7 +82,7 @@ router.post("/", async (req, res) => {
 router.get("/history", async (req,res)=>{
 
     try {
-        const prompts = await Prompt.find({userId: req.user.id});
+        const prompts = await Prompt.find({userId: req.user.id}).sort({ createdAt: 1 });
         res.status(200).json({
         success:true,
         data: prompts

@@ -1,85 +1,56 @@
-# 🤖 GenBot — Minimalist AI Chatbot
+# 🤖 GenBot — My Personal AI Chatbot
 
-A lightweight full-stack AI chatbot application featuring real-time streaming responses, a sidebar thread manager, user authentication, and profile editing. Built with a high-contrast editorial look and powered by **Llama 3.3 70B** on Groq.
-
-🔗 **Demo Link**: [gen-chatbot-three.vercel.app](https://gen-chatbot-three.vercel.app)
+I built GenBot, a lightweight full-stack AI chatbot application. It features real-time streaming responses, a clean sidebar conversation manager, secure user authentication, and profile editing. I designed it using a premium, high-contrast visual layout inspired by high-end design systems.
 
 ---
 
-## ⚙️ Core Architecture & "Why this Stack?"
+## ⚙️ Why I Chose this Stack
 
-This project follows specific technology design choices optimized for speed, simplicity, and visual focus:
+I chose these specific technologies to make my app fast, responsive, and clean:
 
-### ⚡ Why Groq + Llama 3.3?
-- **Speed Over Everything**: Groq's LPU (Language Processing Unit) delivers inference speeds exceeding 250 tokens per second. We query the `llama-3.3-70b-versatile` model to provide fast responses.
-
-### 📡 Why Server-Sent Events (SSE)?
-- **Low-Overhead Streaming**: Rather than polling or maintaining full duplex WebSockets, we utilize Server-Sent Events (via Express and standard `fetch` body readers). This provides an easy, unidirectional flow that streams tokens directly into the client.
-
-### 🍃 Why MongoDB?
-- **Flexible Document Model**: Conversation histories are grouped under unique thread UUIDs. MongoDB's document structure easily stores nested, heterogeneous schema logs without requiring strict table joins.
-
-### 🎨 Why the Nike Minimal Aesthetic?
-- **Contrast Focus**: Following high-end digital editorial design specs, the interface relies on true black/white colors, `9999px` pills, and flat container grids. This design ensures that user content takes absolute priority.
+* **Groq + Llama 3.3 70B**: I query the `llama-3.3-70b-versatile` model via Groq's high-speed inference engine. This gives me response speeds exceeding 250 words per second.
+* **Server-Sent Events (SSE)**: I chose SSE because it allows my backend to stream replies token-by-token directly to my client, without the heavy overhead of WebSockets.
+* **MongoDB Atlas**: I store conversation histories in MongoDB. Its flexible document model allows me to group threads by unique session UUIDs without complex relational tables.
+* **Typographic Design System**: I selected a high-contrast layout utilizing only pure black and white surfaces, which makes reading bot responses highly legible.
 
 ---
 
-## 📁 Repository Map
+## ⚡ My Optimizations & Performance Tuning
 
-```
-GenBot/
-├── server.js              # Express server with CORS config
-├── db.js                  # MongoDB Mongoose connection
-├── jwt.js                 # JWT auth middleware
-├── models/
-│   ├── user.js            # User model (name, username, email, mobile, password)
-│   └── prompt.js          # Dialogue history (textPrompt, textAnswer, conversationId)
-├── routes/
-│   ├── userRoutes.js      # Auth check, signup, profile endpoints
-│   └── promptRoutes.js    # Streaming completions and history routes
-└── frontend/              # Client (Vite + React 18)
-    ├── src/
-    │   ├── main.jsx       # App entry
-    │   ├── App.jsx        # Routing configuration
-    │   ├── api.js         # Centralized Axios configs
-    │   ├── index.css      # Core Nike typography tokens & Dark Mode switches
-    │   ├── context/       # Authentication context loading
-    │   ├── components/    # Reusable layouts (Navbar)
-    │   └── pages/         # View panels (Home, Chat, History, Settings)
-    └── vercel.json        # Single-page-app route rewrite routing rules
-```
+I implemented several custom optimizations to ensure high speed and visual stability:
+
+1. **Compound Database Indexing**: I added a compound index on `{ userId: 1, conversationId: 1 }` in my database. This allows MongoDB to search and sort user chat threads instantly, bypassing slow full-database table scans.
+2. **CORS Preflight Caching**: I configured my server's CORS rules to cache preflight validation requests (`maxAge: 86400`). This saves client-side network round-trips for every API request, reducing loading lag.
+3. **Debounced Username Checks**: On the signup page, I debounced the input box validation by 500ms. This prevents spamming my database with lookups on every single key stroke.
+4. **Stateful SSE Chunk Buffer**: I patched the client's network stream reader. It retains incomplete TCP network fragments and merges them before running `JSON.parse()`, resolving rendering crashes.
+5. **DNS Outbound Server Overrides**: I bypassed local resolver timeouts on Windows by setting custom public resolver addresses (`8.8.8.8` / `1.1.1.1`) inside my MongoDB connection code, preventing DB connection errors.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 How to Run My Project
 
-### 1. Prerequisites
-- Node.js 18+
-- MongoDB Atlas cluster URL
-- Groq API Key ([console.groq.com](https://console.groq.com))
-
-### 2. Backend Setup
-Run in root folder:
+### 1. Root Setup & Backend
+Run in my root folder to install dependencies:
 ```bash
 npm install
 ```
 
-Create a root `.env` file:
+Create a root `.env` file containing:
 ```env
 MONGO_URL=mongodb+srv://<user>:<pwd>@cluster.mongodb.net/database
-JWT_SECRET=your_jwt_signature_secret_key
-GROQ_API_KEY=gsk_your_groq_api_token
+JWT_SECRET=my_jwt_token_signature_secret
+GROQ_API_KEY=gsk_my_groq_api_token
 PORT=3000
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-Start backend:
+Start my server:
 ```bash
 npm run dev
 ```
 
-### 3. Frontend Setup
-Run in `frontend` folder:
+### 2. Frontend Client
+Run in the `frontend` folder:
 ```bash
 npm install
 ```
@@ -89,16 +60,16 @@ Create a `frontend/.env` file:
 VITE_API_URL=http://localhost:3000
 ```
 
-Start client:
+Start my React client:
 ```bash
 npm run dev
 ```
 
 ---
 
-## 📡 Key API Routes
+## 📡 My Main API Routes
 
-- `POST /user/signup` — Registers user (validates username uniqueness, mobile structure, and password strengths).
-- `GET /user/check-username/:username` — Performs live availability audits.
-- `POST /prompt` — Initiates an SSE text stream for prompts.
-- `GET /prompt/history` — Retreives past dialogue listings.
+* `POST /user/signup` — Registers a new account (checks username uniqueness, restricts phone numbers to 10 digits, and enforces password complexity rules).
+* `GET /user/check-username/:username` — My live check endpoint to verify username availability.
+* `POST /prompt` — My SSE prompt endpoint that streams responses token-by-token.
+* `GET /prompt/history` — Retreives conversation history.

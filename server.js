@@ -39,7 +39,8 @@ app.use(cors({
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"]
+  allowedHeaders: ["Content-Type", "Authorization"],
+  maxAge: 86400 // Cache CORS preflight responses for 24 hours to reduce options check latencies
 }));
 app.use(express.json());
 const {jwtAuthMiddleware } = require("./jwt");

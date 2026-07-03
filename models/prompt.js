@@ -20,5 +20,7 @@ const promptSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+promptSchema.index({ userId: 1, conversationId: 1 });
+
 const Prompt = mongoose.model("Prompt", promptSchema);
 module.exports = Prompt;

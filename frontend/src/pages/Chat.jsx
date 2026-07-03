@@ -275,6 +275,10 @@ const Chat = () => {
     const userMsg = (text || '').trim();
     if (!userMsg || loadingRef.current) return;
 
+    if (isListeningRef.current) {
+      stopListening();
+    }
+
     let currentConvId = activeConversationId;
     if (!currentConvId) {
       currentConvId = crypto.randomUUID();
