@@ -25,6 +25,16 @@ const Login = () => {
         navigate('/chat');
       }
     } catch (err) {
+      if (err.response?.status === 403) {
+        const email = err.response.data.email;
+        try {
+          await api.post('/user/resend-otp', { email });
+        } catch (resendErr) {
+          console.error("Auto-resend OTP failed:", resendErr);
+        }
+        navigate(`/verify-email?email=${encodeURIComponent(email)}&fromLogin=true`);
+        return;
+      }
       setError(err.response?.data?.message || 'Login failed. Please check credentials.');
     } finally {
       setLoading(false);

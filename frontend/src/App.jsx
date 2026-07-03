@@ -9,6 +9,7 @@ import Signup from './pages/Signup';
 import Chat from './pages/Chat';
 import History from './pages/History';
 import Profile from './pages/Profile';
+import VerifyEmail from './pages/VerifyEmail';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useContext(AuthContext);
@@ -54,6 +55,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/chat" element={<PrivateRoute><Chat /></PrivateRoute>} />
           <Route path="/history" element={<PrivateRoute><History /></PrivateRoute>} />
           <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
