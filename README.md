@@ -1,6 +1,7 @@
+<!-- Production Launch v1.0.0 - Optimized AI Chatbot -->
 # 🤖 GenBot — My Personal AI Chatbot
 
-I built GenBot, a lightweight full-stack AI chatbot application. It features real-time streaming responses, a clean sidebar conversation manager, secure user authentication, and profile editing. I designed it using a premium, high-contrast visual layout inspired by high-end design systems.
+I built GenBot, a lightweight full-stack AI chatbot application. It features real-time streaming responses, a clean sidebar conversation manager, secure user authentication, profile editing, and verification. I designed it using a premium, high-contrast visual layout inspired by high-end design systems.
 
 ---
 
@@ -42,6 +43,13 @@ JWT_SECRET=my_jwt_token_signature_secret
 GROQ_API_KEY=gsk_my_groq_api_token
 PORT=3000
 ALLOWED_ORIGINS=http://localhost:5173
+
+# Email Verification (Brevo / Gmail SMTP)
+EMAIL_HOST=smtp-relay.brevo.com
+EMAIL_PORT=587
+EMAIL_USER=your-smtp-login-email
+EMAIL_PASS=your-smtp-password-or-app-key
+EMAIL_FROM_NAME=GenBot
 ```
 
 Start my server:
@@ -69,7 +77,9 @@ npm run dev
 
 ## 📡 My Main API Routes
 
-* `POST /user/signup` — Registers a new account (checks username uniqueness, restricts phone numbers to 10 digits, and enforces password complexity rules).
+* `POST /user/signup` — Registers a new account and sends email verification OTP.
+* `POST /user/verify-otp` — Validates email verification OTP code.
+* `POST /user/resend-otp` — Regenerates verification OTP with cooldown timer.
 * `GET /user/check-username/:username` — My live check endpoint to verify username availability.
 * `POST /prompt` — My SSE prompt endpoint that streams responses token-by-token.
 * `GET /prompt/history` — Retreives conversation history.
