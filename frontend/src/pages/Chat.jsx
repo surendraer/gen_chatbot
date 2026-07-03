@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User as UserIcon, Mic, MicOff, Copy, Check, AlertCircle, Plus, MessageSquare, Menu, X } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Mic, MicOff, Copy, Check, AlertCircle, Plus, MessageSquare, Menu, X, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api';
@@ -9,22 +9,22 @@ import api from '../api';
 // CopyButton — shown inside every fenced code block
 // ─────────────────────────────────────────────────────────────────────────────
 function CopyButton({ code }) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(code).then(() => {
         setCopied(true);
-        setTimeout(() => setCopied(false), 2200);
+        setTimeout(() => setCopied(false), 2000);
       }).catch(() => {
         fallbackCopy(code);
         setCopied(true);
-        setTimeout(() => setCopied(false), 2200);
+        setTimeout(() => setCopied(false), 2000);
       });
     } else {
       fallbackCopy(code);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -32,29 +32,29 @@ function CopyButton({ code }) {
     <button
       onClick={handleCopy}
       title={copied ? 'Copied!' : 'Copy code'}
+      className="btn-secondary"
       style={{
         position: 'absolute',
         top: '8px',
         right: '8px',
-        background: copied ? 'rgba(16,185,129,0.25)' : 'rgba(255,255,255,0.07)',
-        border: copied ? '1px solid rgba(16,185,129,0.5)' : '1px solid rgba(255,255,255,0.12)',
-        color: copied ? '#10b981' : '#94a3b8',
-        borderRadius: '6px',
-        padding: '5px 12px',
-        fontSize: '0.74rem',
+        height: '28px',
+        padding: '0 10px',
+        fontSize: '11px',
         fontWeight: 600,
-        cursor: 'pointer',
+        borderRadius: 'var(--rounded-sm)',
+        backgroundColor: copied ? 'var(--color-success)' : 'var(--color-canvas)',
+        color: copied ? 'var(--color-on-primary)' : 'var(--color-ink)',
+        zIndex: 2,
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        border: '1px solid var(--color-hairline)',
         display: 'flex',
         alignItems: 'center',
-        gap: '5px',
-        transition: 'all 0.25s ease',
-        zIndex: 2,
-        letterSpacing: '0.03em',
-        lineHeight: 1,
+        gap: '4px'
       }}
     >
-      {copied ? <Check size={13} /> : <Copy size={13} />}
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? <Check size={11} /> : <Copy size={11} />}
+      {copied ? 'Copied' : 'Copy'}
     </button>
   );
 }
@@ -83,10 +83,8 @@ function extractText(node) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Custom renderers for react-markdown v10
+// Custom renderers for react-markdown
 // ─────────────────────────────────────────────────────────────────────────────
-
-// <pre> wraps block code — we intercept here for copy button + language badge
 function PreBlock({ children, ...rest }) {
   let codeChild = children;
   if (Array.isArray(children)) codeChild = children[0];
@@ -98,14 +96,17 @@ function PreBlock({ children, ...rest }) {
   const rawCode = extractText(codeChild?.props?.children).replace(/\n$/, '');
 
   return (
-    <div style={{ position: 'relative', margin: '14px 0' }}>
+    <div style={{ position: 'relative', margin: '18px 0' }}>
       {language && (
         <span style={{
           position: 'absolute', top: 0, left: 0, zIndex: 1,
-          background: 'rgba(99,102,241,0.25)', color: '#a5b4fc',
-          fontSize: '0.68rem', fontWeight: 700, padding: '3px 10px',
-          borderRadius: '8px 0 8px 0', textTransform: 'uppercase',
-          letterSpacing: '0.06em', userSelect: 'none',
+          background: 'var(--color-ink)', color: 'var(--color-on-primary)',
+          fontSize: '10px', fontWeight: 700, padding: '3px 10px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em', userSelect: 'none',
+          borderBottomRightRadius: 'var(--rounded-sm)',
+          borderRight: '1px solid var(--color-hairline-soft)',
+          borderBottom: '1px solid var(--color-hairline-soft)',
         }}>
           {language}
         </span>
@@ -114,19 +115,17 @@ function PreBlock({ children, ...rest }) {
       <pre
         {...rest}
         style={{
-          background: 'rgba(10,15,32,0.92)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '10px',
-          padding: '38px 16px 16px',
+          background: '#0a0a0a',
+          border: '1px solid var(--color-hairline)',
+          borderRadius: 'var(--rounded-none)',
+          padding: '40px 16px 16px',
           overflowX: 'auto',
-          fontSize: '0.875rem',
-          lineHeight: 1.65,
+          fontSize: '13px',
+          lineHeight: 1.6,
+          color: '#f5f5f5',
           fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'rgba(255,255,255,0.12) transparent',
           margin: 0,
           whiteSpace: 'pre',
-          wordWrap: 'normal',
         }}
       >
         {children}
@@ -135,19 +134,19 @@ function PreBlock({ children, ...rest }) {
   );
 }
 
-// Inline <code> — styled differently, no copy button
 function InlineCode({ children, className, ...rest }) {
   return (
     <code
       className={className}
       style={{
-        background: 'rgba(99,102,241,0.15)',
-        border: '1px solid rgba(99,102,241,0.2)',
+        background: 'var(--color-soft-cloud)',
+        border: '1px solid var(--color-hairline-soft)',
         borderRadius: '4px',
-        padding: '1px 6px',
-        fontSize: '0.875em',
+        padding: '2px 6px',
+        fontSize: '14px',
+        fontWeight: 600,
         fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
-        color: '#a5b4fc',
+        color: 'var(--color-ink)',
         whiteSpace: 'break-spaces',
       }}
       {...rest}
@@ -208,15 +207,15 @@ const Chat = () => {
     try {
       const { data } = await api.get('/prompt/history');
       if (data && data.success && Array.isArray(data.data)) {
-        // Group by conversationId (processing chronologically)
+        // Group by conversationId
         const grouped = {};
         
         data.data.forEach(p => {
-          const cid = p.conversationId || p._id; // Fallback to prompt id if no conv ID
+          const cid = p.conversationId || p._id;
           if (!grouped[cid]) {
             grouped[cid] = {
               id: cid,
-              title: p.textPrompt, // Set to FIRST prompt chronologically
+              title: p.textPrompt,
               messages: [],
               createdAt: p.createdAt,
               updatedAt: p.createdAt
@@ -231,7 +230,6 @@ const Chat = () => {
           grouped[cid].updatedAt = p.createdAt;
         });
 
-        // Convert to array and sort by latest activity
         const sortedList = Object.values(grouped).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
         setConversationsList(sortedList);
         return grouped;
@@ -249,9 +247,7 @@ const Chat = () => {
   const loadConversation = (convId) => {
     const conv = conversationsList.find(c => c.id === convId);
     if (conv) {
-      // Reconstruct messages array from the conversation's grouped messages
       const newMessages = [];
-      // They are already in chronological order
       conv.messages.forEach(msg => {
         newMessages.push({ id: `user-${msg.id}`, text: msg.prompt, sender: 'user' });
         newMessages.push({ id: `bot-${msg.id}`, text: msg.answer, sender: 'bot' });
@@ -289,7 +285,6 @@ const Chat = () => {
     const userMsgId = ts;
     const botMsgId = ts + 1;
 
-    // Convert current messages to history format for backend context
     const historyPayload = [];
     messages.forEach(m => {
        historyPayload.push({
@@ -354,7 +349,6 @@ const Chat = () => {
         }
       }
       
-      // Refresh sidebar list to show new message/conversation
       await fetchConversations();
       
     } catch (err) {
@@ -375,20 +369,10 @@ const Chat = () => {
     sendMessage(input);
   };
 
-  // ── Voice input (robust Web Speech API) ──────────────────────────────────
-  const createRecognition = useCallback(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return null;
-
-    const recognition = new SR();
-    recognition.lang = navigator.language || 'en-US';
-    recognition.interimResults = true;
-    recognition.continuous = true;       
-    recognition.maxAlternatives = 1;
-    return recognition;
-  }, []);
-
+  // ── Robust continuous voice recognition loop ──────────────────────────────────
   const stopListening = useCallback(() => {
+    isListeningRef.current = false;
+    setIsListening(false);
     if (recognitionRef.current) {
       try { recognitionRef.current.stop(); } catch {}
     }
@@ -399,22 +383,33 @@ const Chat = () => {
       setVoiceError('Voice input is not supported in your browser. Try Chrome or Edge.');
       return;
     }
+
     if (recognitionRef.current) {
       try { recognitionRef.current.abort(); } catch {}
-      recognitionRef.current = null;
     }
+
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
+    recognition.lang = navigator.language || 'en-US';
+    recognition.interimResults = true;
+    recognition.continuous = true;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition;
+
     finalTranscriptRef.current = '';
     interimTranscriptRef.current = '';
     setVoiceTranscript('');
     setVoiceError('');
+    setIsListening(true);
+    isListeningRef.current = true;
 
-    const recognition = createRecognition();
-    if (!recognition) return;
-    recognitionRef.current = recognition;
+    recognition.onstart = () => {
+      setInput('');
+    };
 
-    recognition.onstart = () => { setIsListening(true); setInput(''); };
     recognition.onresult = (event) => {
-      let final = ''; let interim = '';
+      let final = '';
+      let interim = '';
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const r = event.results[i];
         if (r.isFinal) final += r[0].transcript;
@@ -426,79 +421,86 @@ const Chat = () => {
       setVoiceTranscript(display);
       setInput(display);
     };
+
     recognition.onerror = (event) => {
       if (event.error === 'no-speech') return;
-      if (event.error === 'not-allowed' || event.error === 'permission-denied') setVoiceError('Microphone access denied.');
-      else if (event.error === 'network') setVoiceError('Speech recognition requires an internet connection.');
-      else if (event.error !== 'aborted') setVoiceError(`Voice error: ${event.error}`);
+      if (event.error === 'not-allowed' || event.error === 'permission-denied') {
+        setVoiceError('Microphone access denied.');
+      } else if (event.error === 'network') {
+        setVoiceError('Speech recognition requires an internet connection.');
+      } else {
+        setVoiceError(`Voice error: ${event.error}`);
+      }
       setIsListening(false);
-      recognitionRef.current = null;
+      isListeningRef.current = false;
     };
+
     recognition.onend = () => {
       if (isListeningRef.current) {
         try {
-          recognitionRef.current = createRecognition();
-          if (!recognitionRef.current) return;
-          recognition.onend = null; 
-          startListeningSession(recognitionRef.current);
-        } catch { setIsListening(false); }
-        return;
+          recognition.start(); // Auto-restart to enable continuous input
+        } catch {
+          setIsListening(false);
+          isListeningRef.current = false;
+        }
+      } else {
+        const captured = (finalTranscriptRef.current + ' ' + interimTranscriptRef.current).trim();
+        setIsListening(false);
+        if (captured) {
+          setTimeout(() => sendMessage(captured), 80);
+        } else {
+          setVoiceTranscript('');
+        }
       }
-      const captured = (finalTranscriptRef.current + ' ' + interimTranscriptRef.current).trim();
-      setIsListening(false);
-      recognitionRef.current = null;
-      if (captured) setTimeout(() => sendMessage(captured), 80);
-      else setVoiceTranscript('');
     };
-    try { recognition.start(); } catch (err) {
-      setIsListening(false); recognitionRef.current = null;
+
+    try {
+      recognition.start();
+    } catch (err) {
+      setIsListening(false);
+      isListeningRef.current = false;
       setVoiceError('Could not start the microphone. Please try again.');
     }
-  }, [voiceSupported, createRecognition, sendMessage]);
-
-  const startListeningSession = useCallback((recognition) => {
-    recognition.lang = navigator.language || 'en-US';
-    recognition.interimResults = true; recognition.continuous = true; recognition.maxAlternatives = 1;
-    recognition.onresult = (event) => {
-      let final = ''; let interim = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) final += event.results[i][0].transcript;
-        else interim += event.results[i][0].transcript;
-      }
-      finalTranscriptRef.current += final; interimTranscriptRef.current = interim;
-      const display = (finalTranscriptRef.current + ' ' + interim).trim();
-      setVoiceTranscript(display); setInput(display);
-    };
-    recognition.onerror = (event) => { if (event.error !== 'no-speech' && event.error !== 'aborted') { setVoiceError(`Voice error: ${event.error}`); setIsListening(false); } };
-    recognition.onend = () => {
-      if (!isListeningRef.current) {
-        const captured = (finalTranscriptRef.current + ' ' + interimTranscriptRef.current).trim();
-        setIsListening(false); recognitionRef.current = null;
-        if (captured) setTimeout(() => sendMessage(captured), 80); else setVoiceTranscript('');
-      }
-    };
-    try { recognition.start(); } catch {}
-  }, [sendMessage]);
+  }, [voiceSupported, sendMessage]);
 
   const toggleListening = () => {
-    if (isListening) { isListeningRef.current = false; stopListening(); } 
-    else { startListening(); }
+    if (isListening) stopListening();
+    else startListening();
   };
 
   useEffect(() => {
-    return () => { isListeningRef.current = false; if (recognitionRef.current) { try { recognitionRef.current.abort(); } catch {} } };
+    return () => {
+      isListeningRef.current = false;
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch {}
+      }
+    };
   }, []);
 
   return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', position: 'relative' }}>
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden', position: 'relative', backgroundColor: 'var(--color-canvas)' }}>
       
       {/* Sidebar Toggle Button for Mobile */}
       {!isSidebarOpen && (
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          style={{ position: 'absolute', top: '15px', left: '15px', zIndex: 10, background: 'rgba(15,23,42,0.8)', color: 'white', padding: '8px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', display: window.innerWidth > 768 ? 'none' : 'block' }}
+          style={{ 
+            position: 'absolute', 
+            top: '15px', 
+            left: '15px', 
+            zIndex: 10, 
+            background: 'var(--color-ink)', 
+            color: 'var(--color-on-primary)', 
+            padding: '8px', 
+            borderRadius: 'var(--rounded-full)', 
+            border: 'none', 
+            cursor: 'pointer', 
+            display: window.innerWidth > 768 ? 'none' : 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
         >
-          <Menu size={20} />
+          <Menu size={18} />
         </button>
       )}
 
@@ -514,77 +516,82 @@ const Chat = () => {
               width: '280px',
               minWidth: '280px',
               height: '100%',
-              background: 'rgba(9, 9, 11, 0.95)',
-              borderRight: '1px solid rgba(255,255,255,0.05)',
+              backgroundColor: 'var(--color-soft-cloud)',
+              borderRight: '1px solid var(--color-hairline-soft)',
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
               position: window.innerWidth <= 768 ? 'absolute' : 'relative',
               zIndex: 20,
-              boxShadow: window.innerWidth <= 768 ? '5px 0 15px rgba(0,0,0,0.5)' : 'none'
+              boxShadow: window.innerWidth <= 768 ? '4px 0 20px rgba(0,0,0,0.08)' : 'none'
             }}
           >
-            <div style={{ padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* Sidebar Header */}
+            <div style={{ padding: '1.25rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid var(--color-hairline-soft)' }}>
               <button 
                 onClick={startNewChat}
                 className="btn-primary"
-                style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '12px', borderRadius: '8px' }}
+                style={{ flex: 1, height: '40px', fontSize: '14px', borderRadius: 'var(--rounded-lg)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
               >
-                <Plus size={18} /> New Chat
+                <Plus size={16} /> NEW CHAT
               </button>
               {window.innerWidth <= 768 && (
-                <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'none', color: 'var(--text-muted)', border: 'none', marginLeft: '10px', cursor: 'pointer' }}>
-                  <X size={24} />
+                <button onClick={() => setIsSidebarOpen(false)} style={{ background: 'none', color: 'var(--color-ink)', border: 'none', marginLeft: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                  <ArrowLeft size={20} />
                 </button>
               )}
             </div>
 
-            <div style={{ padding: '0.5rem 1rem 0.2rem' }}>
-               <h3 style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>Recent Chats</h3>
+            {/* Sidebar Title */}
+            <div style={{ padding: '1.25rem 1.25rem 0.5rem' }}>
+               <h3 className="caption-sm" style={{ fontWeight: 700, color: 'var(--color-ink)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Recent Chats</h3>
             </div>
 
-            <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {/* Sidebar Chat List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '0 0.75rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {conversationsList.length === 0 ? (
-                <div style={{ padding: '2rem 1rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                  No history yet. Start a new conversation!
+                <div className="caption-md" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
+                  No history yet. Start a conversation!
                 </div>
               ) : (
-                conversationsList.map(conv => (
-                  <button
-                    key={conv.id}
-                    onClick={() => loadConversation(conv.id)}
-                    style={{
-                      background: activeConversationId === conv.id ? 'rgba(99,102,241,0.15)' : 'transparent',
-                      color: activeConversationId === conv.id ? 'white' : 'var(--text-muted)',
-                      border: 'none',
-                      padding: '12px',
-                      borderRadius: '8px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      transition: 'all 0.2s',
-                    }}
-                    onMouseOver={(e) => {
-                      if (activeConversationId !== conv.id) {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                        e.currentTarget.style.color = 'white';
-                      }
-                    }}
-                    onMouseOut={(e) => {
-                      if (activeConversationId !== conv.id) {
-                        e.currentTarget.style.background = 'transparent';
-                        e.currentTarget.style.color = 'var(--text-muted)';
-                      }
-                    }}
-                  >
-                    <MessageSquare size={16} style={{ flexShrink: 0 }} />
-                    <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '0.9rem', flex: 1 }}>
-                      {conv.title || 'New Conversation'}
-                    </span>
-                  </button>
-                ))
+                conversationsList.map(conv => {
+                  const isActive = activeConversationId === conv.id;
+                  return (
+                    <button
+                      key={conv.id}
+                      onClick={() => loadConversation(conv.id)}
+                      style={{
+                        background: isActive ? 'var(--color-canvas)' : 'transparent',
+                        color: 'var(--color-ink)',
+                        border: 'none',
+                        borderLeft: isActive ? '3px solid var(--color-ink)' : '3px solid transparent',
+                        padding: '10px 12px',
+                        borderRadius: '0px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all var(--transition-fast)',
+                      }}
+                      onMouseOver={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'rgba(17,17,17,0.03)';
+                        }
+                      }}
+                      onMouseOut={(e) => {
+                        if (!isActive) {
+                          e.currentTarget.style.background = 'transparent';
+                        }
+                      }}
+                    >
+                      <MessageSquare size={14} style={{ flexShrink: 0, opacity: isActive ? 1 : 0.6 }} />
+                      <span className="body-strong" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontSize: '13px', flex: 1, fontWeight: isActive ? 600 : 400 }}>
+                        {conv.title || 'New Conversation'}
+                      </span>
+                    </button>
+                  );
+                })
               )}
             </div>
           </motion.div>
@@ -592,61 +599,110 @@ const Chat = () => {
       </AnimatePresence>
 
       {/* Main Chat Area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', minWidth: 0, overflow: 'hidden', backgroundColor: 'var(--color-canvas)' }}>
         
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
           height: '100%', width: '100%',
-          padding: '1rem 2rem', paddingTop: window.innerWidth <= 768 && !isSidebarOpen ? '60px' : '1rem',
-          overflow: 'hidden'
+          padding: '1.5rem 2rem', paddingTop: window.innerWidth <= 768 && !isSidebarOpen ? '60px' : '1.5rem',
+          overflow: 'hidden',
+          maxWidth: '960px',
+          margin: '0 auto'
         }}>
           {/* Messages Area */}
           <div style={{
-            flex: 1, overflowY: 'auto', padding: '1rem',
+            flex: 1, overflowY: 'auto', paddingRight: '6px',
             display: 'flex', flexDirection: 'column', gap: '1.5rem',
             background: 'transparent',
             marginBottom: '1rem',
-            scrollbarWidth: 'thin',
-            scrollbarColor: 'var(--bg-content-hover) transparent',
           }}>
             {messages.length === 0 ? (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', opacity: 0.8 }}>
-                <Bot size={64} style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
-                <h2 style={{ fontSize: '1.8rem', fontWeight: 600, marginBottom: '0.5rem' }}>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <Bot size={48} strokeWidth={1.5} style={{ marginBottom: '1.5rem', color: 'var(--color-ink)' }} />
+                <h1 className="heading-xl" style={{ textTransform: 'uppercase', marginBottom: '0.5rem', textAlign: 'center' }}>
                   Hello, {user?.name?.split(' ')[0] ?? 'there'}
-                </h2>
-                <p style={{ color: 'var(--text-muted)' }}>How can I help you today?</p>
+                </h1>
+                <p className="caption-md" style={{ textAlign: 'center' }}>How can I assist you with your project today?</p>
               </div>
             ) : (
               <AnimatePresence initial={false}>
-                {messages.map((msg) => (
-                  <motion.div
-                    key={msg.id}
-                    initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
-                    style={{ display: 'flex', gap: '1rem', alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start', maxWidth: '85%', flexDirection: msg.sender === 'user' ? 'row-reverse' : 'row' }}
-                  >
-                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: msg.sender === 'user' ? 'rgba(99,102,241,0.2)' : 'rgba(16,185,129,0.2)', color: msg.sender === 'user' ? 'var(--primary-accent)' : 'var(--secondary-accent)' }}>
-                      {msg.sender === 'user' ? <UserIcon size={20} /> : <Bot size={20} />}
-                    </div>
-                    <div style={{ background: msg.sender === 'user' ? 'linear-gradient(135deg, var(--primary-accent), var(--primary-hover))' : 'rgba(30,41,59,0.8)', padding: '14px 18px', borderRadius: '16px', borderTopRightRadius: msg.sender === 'user' ? '4px' : '16px', borderTopLeftRadius: msg.sender === 'bot' ? '4px' : '16px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.15)', color: msg.error ? 'var(--danger)' : 'white', lineHeight: 1.6, wordBreak: 'break-word', minWidth: 0, maxWidth: '100%', border: msg.sender === 'bot' ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-                      {msg.sender === 'user' ? (
-                        <span style={{ whiteSpace: 'pre-wrap' }}>{msg.text}</span>
-                      ) : (
-                        <div className="markdown-body">
-                          <ReactMarkdown components={markdownComponents}>{msg.text}</ReactMarkdown>
-                        </div>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
+                {messages.map((msg) => {
+                  const isUser = msg.sender === 'user';
+                  return (
+                    <motion.div
+                      key={msg.id}
+                      initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+                      style={{ 
+                        display: 'flex', 
+                        gap: '0.75rem', 
+                        alignSelf: isUser ? 'flex-end' : 'flex-start', 
+                        maxWidth: '85%', 
+                        flexDirection: isUser ? 'row-reverse' : 'row',
+                        alignItems: 'flex-start'
+                      }}
+                    >
+                      {/* Avatar */}
+                      <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: 'var(--rounded-full)', 
+                        flexShrink: 0, 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        background: isUser ? 'var(--color-ink)' : 'var(--color-soft-cloud)', 
+                        color: isUser ? 'var(--color-on-primary)' : 'var(--color-ink)',
+                        border: isUser ? 'none' : '1px solid var(--color-hairline-soft)'
+                      }}>
+                        {isUser ? <UserIcon size={16} /> : <Bot size={16} />}
+                      </div>
+
+                      {/* Bubble content */}
+                      <div style={{ 
+                        backgroundColor: isUser ? 'var(--color-ink)' : 'var(--color-soft-cloud)', 
+                        padding: '16px 20px', 
+                        borderRadius: isUser ? '20px' : '0px', // Flat 0 border radius for bot card
+                        borderTopRightRadius: isUser ? '4px' : '0px',
+                        borderTopLeftRadius: isUser ? '20px' : '0px',
+                        color: isUser ? 'var(--color-on-primary)' : 'var(--color-ink)', 
+                        lineHeight: 1.6, 
+                        wordBreak: 'break-word', 
+                        minWidth: 0, 
+                        maxWidth: '100%',
+                        border: isUser ? 'none' : '1px solid var(--color-hairline-soft)'
+                      }}>
+                        {isUser ? (
+                          <span style={{ whiteSpace: 'pre-wrap', fontSize: '15px' }}>{msg.text}</span>
+                        ) : (
+                          <div className="markdown-body">
+                            <ReactMarkdown components={markdownComponents}>{msg.text}</ReactMarkdown>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </AnimatePresence>
             )}
 
             {loading && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '1rem', alignSelf: 'flex-start' }}>
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(16,185,129,0.2)', color: 'var(--secondary-accent)' }}><Bot size={20} /></div>
-                <div style={{ background: 'rgba(30,41,59,0.8)', padding: '16px', borderRadius: '16px', borderTopLeftRadius: '4px' }}>
-                  <span className="spinner" style={{ width: '16px', height: '16px', borderTopColor: 'var(--secondary-accent)' }} />
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '0.75rem', alignSelf: 'flex-start' }}>
+                <div style={{ 
+                  width: '32px', 
+                  height: '32px', 
+                  borderRadius: 'var(--rounded-full)', 
+                  flexShrink: 0, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  background: 'var(--color-soft-cloud)', 
+                  color: 'var(--color-ink)',
+                  border: '1px solid var(--color-hairline-soft)'
+                }}>
+                  <Bot size={16} />
+                </div>
+                <div style={{ backgroundColor: 'var(--color-soft-cloud)', padding: '16px 24px', borderRadius: '0px', border: '1px solid var(--color-hairline-soft)' }}>
+                  <span className="spinner" style={{ width: '16px', height: '16px' }} />
                 </div>
               </motion.div>
             )}
@@ -654,43 +710,126 @@ const Chat = () => {
           </div>
 
           {/* Input area */}
-          <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div style={{ position: 'relative', flexShrink: 0, paddingTop: '10px', borderTop: '1px solid var(--color-hairline-soft)' }}>
+            
+            {/* Visual sound wave recording feedback */}
             {isListening && (
-              <div style={{ padding: '8px 16px', marginBottom: '6px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 'var(--border-radius-sm)', fontSize: '0.9rem', color: '#f87171', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#ef4444', display: 'inline-block', animation: 'pulse-danger 1.5s infinite', flexShrink: 0 }} />
-                {voiceTranscript ? <span style={{ fontStyle: 'italic', flex: 1 }}>"{voiceTranscript}"</span> : <span style={{ opacity: 0.8 }}>Listening… start speaking. Click mic to stop & send.</span>}
+              <div style={{ 
+                padding: '10px 16px', 
+                marginBottom: '10px', 
+                backgroundColor: 'rgba(211,0,5,0.04)', 
+                border: '1px solid rgba(211,0,5,0.15)', 
+                borderRadius: 'var(--rounded-md)', 
+                fontSize: '13px', 
+                color: 'var(--color-sale)', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'space-between',
+                gap: '12px' 
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--color-sale)', display: 'inline-block' }} />
+                  {voiceTranscript ? (
+                    <span style={{ fontStyle: 'italic', color: 'var(--color-ink)' }}>"{voiceTranscript}"</span>
+                  ) : (
+                    <span style={{ fontWeight: 500 }}>LISTENING... START SPEAKING.</span>
+                  )}
+                </div>
+                <div className="voice-wave">
+                  <div className="voice-wave-bar" />
+                  <div className="voice-wave-bar" />
+                  <div className="voice-wave-bar" />
+                  <div className="voice-wave-bar" />
+                  <div className="voice-wave-bar" />
+                </div>
               </div>
             )}
+
             {voiceError && !isListening && (
-              <div style={{ padding: '8px 16px', marginBottom: '6px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 'var(--border-radius-sm)', fontSize: '0.85rem', color: '#fca5a5', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-                <AlertCircle size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
-                <span>{voiceError}</span>
-                <button onClick={() => setVoiceError('')} style={{ marginLeft: 'auto', background: 'none', color: '#fca5a5', fontSize: '1rem', cursor: 'pointer', flexShrink: 0 }}>✕</button>
+              <div style={{ 
+                padding: '10px 16px', 
+                marginBottom: '10px', 
+                backgroundColor: 'rgba(211,0,5,0.05)', 
+                border: '1px solid rgba(211,0,5,0.2)', 
+                borderRadius: 'var(--rounded-md)', 
+                fontSize: '13px', 
+                color: 'var(--color-sale)', 
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: '8px' 
+              }}>
+                <AlertCircle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <span style={{ flex: 1 }}>{voiceError}</span>
+                <button onClick={() => setVoiceError('')} style={{ background: 'none', border: 'none', color: 'var(--color-sale)', fontSize: '13px', cursor: 'pointer', fontWeight: 600 }}>✕</button>
               </div>
             )}
+
             <form onSubmit={handleSubmit} style={{ position: 'relative', width: '100%' }}>
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                placeholder={isListening ? '🎤 Listening… speak now' : 'Message GenBot...'}
+                placeholder={isListening ? 'Listening… speak now' : 'Message GenBot...'}
                 className="input-base"
-                style={{ padding: '18px 24px', paddingRight: voiceSupported ? '116px' : '72px', borderRadius: 'var(--border-radius-xl)', fontSize: '1.05rem', background: 'rgba(15,23,42,0.8)', borderColor: isListening ? 'rgba(239,68,68,0.7)' : undefined, boxShadow: isListening ? '0 0 0 3px rgba(239,68,68,0.18), 0 0 20px rgba(239,68,68,0.1)' : undefined, transition: 'all 0.3s ease', width: '100%' }}
+                style={{ 
+                  padding: '16px 20px', 
+                  paddingRight: voiceSupported ? '110px' : '65px', 
+                  borderRadius: 'var(--rounded-lg)', 
+                  fontSize: '15px', 
+                  backgroundColor: 'var(--color-soft-cloud)', 
+                  borderColor: isListening ? 'var(--color-sale)' : 'transparent',
+                  boxShadow: isListening ? '0 0 0 3px rgba(211,0,5,0.08)' : undefined, 
+                  transition: 'all var(--transition-fast) ease', 
+                  width: '100%' 
+                }}
                 disabled={loading}
               />
-              <div style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {voiceSupported && (
-                  <button type="button" onClick={toggleListening} title={isListening ? 'Stop & send' : 'Speak message'} style={{ background: isListening ? 'var(--danger)' : 'rgba(255,255,255,0.05)', color: isListening ? 'white' : 'var(--text-muted)', padding: '10px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.3s', boxShadow: isListening ? '0 0 18px rgba(239,68,68,0.55)' : 'none', animation: isListening ? 'pulse-danger 1.5s infinite' : 'none' }}>
-                    {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+                  <button 
+                    type="button" 
+                    onClick={toggleListening} 
+                    title={isListening ? 'Stop & send' : 'Speak message'} 
+                    style={{ 
+                      backgroundColor: isListening ? 'var(--color-sale)' : 'rgba(17,17,17,0.05)', 
+                      color: isListening ? 'var(--color-on-primary)' : 'var(--color-ink)', 
+                      width: '36px',
+                      height: '36px', 
+                      borderRadius: 'var(--rounded-full)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      cursor: 'pointer', 
+                      transition: 'all var(--transition-fast)',
+                      border: 'none'
+                    }}
+                  >
+                    {isListening ? <MicOff size={16} /> : <Mic size={16} />}
                   </button>
                 )}
-                <button type="submit" disabled={!input.trim() || loading} style={{ background: input.trim() && !loading ? 'var(--primary-accent)' : 'rgba(255,255,255,0.05)', color: input.trim() && !loading ? 'white' : 'var(--text-muted)', padding: '10px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'all 0.2s', cursor: input.trim() && !loading ? 'pointer' : 'not-allowed' }}>
-                  <Send size={20} />
+                <button 
+                  type="submit" 
+                  disabled={!input.trim() || loading} 
+                  style={{ 
+                    backgroundColor: input.trim() && !loading ? 'var(--color-ink)' : 'rgba(17,17,17,0.05)', 
+                    color: input.trim() && !loading ? 'var(--color-on-primary)' : 'var(--color-stone)', 
+                    width: '36px',
+                    height: '36px', 
+                    borderRadius: 'var(--rounded-full)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    transition: 'all var(--transition-fast)', 
+                    cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
+                    border: 'none'
+                  }}
+                >
+                  <Send size={16} />
                 </button>
               </div>
             </form>
-            <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-              GenBot can make mistakes. Consider checking important information.
+            <div style={{ textAlign: 'center', marginTop: '10px', fontSize: '11px', color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              GenBot can make mistakes. Please check important specifications.
             </div>
           </div>
         </div>

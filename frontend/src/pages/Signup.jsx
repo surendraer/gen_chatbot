@@ -45,19 +45,43 @@ const Signup = () => {
   ];
 
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ 
+      flex: 1, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '2.5rem 2rem',
+      backgroundColor: 'var(--color-canvas)',
+      overflowY: 'auto'
+    }}>
       <motion.div 
-        className="glass-panel"
-        style={{ padding: '3rem', width: '100%', maxWidth: '500px' }}
-        initial={{ y: 20, opacity: 0 }}
+        style={{ 
+          padding: '3rem 2.5rem', 
+          width: '100%', 
+          maxWidth: '560px',
+          backgroundColor: 'var(--color-canvas)',
+          border: '1px solid var(--color-hairline-soft)'
+        }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ background: 'rgba(99,102,241,0.2)', padding: '16px', borderRadius: '50%', display: 'inline-flex', color: 'var(--primary-accent)', marginBottom: '1rem' }}>
-            <UserPlus size={32} />
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ 
+            backgroundColor: 'var(--color-ink)', 
+            color: 'var(--color-on-primary)', 
+            padding: '14px', 
+            borderRadius: 'var(--rounded-full)', 
+            display: 'inline-flex', 
+            marginBottom: '1rem' 
+          }}>
+            <UserPlus size={24} />
           </div>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700 }}>Join GenBot</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Experience AI conversations</p>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-mute)', display: 'block' }}>
+            REGISTRATION GATEWAY
+          </span>
+          <h2 className="heading-lg" style={{ textTransform: 'uppercase', marginTop: '0.25rem' }}>
+            Create Account
+          </h2>
         </div>
 
         <AnimatePresence>
@@ -68,17 +92,26 @@ const Signup = () => {
               exit={{ height: 0, opacity: 0 }}
               style={{ overflow: 'hidden' }}
             >
-              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '12px', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center', fontSize: '0.9rem', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+              <div style={{ 
+                backgroundColor: 'rgba(211,0,5,0.05)', 
+                color: 'var(--color-sale)', 
+                padding: '12px', 
+                border: '1px solid rgba(211,0,5,0.2)',
+                fontSize: '13px', 
+                textAlign: 'center', 
+                marginBottom: '1.5rem',
+                fontWeight: 500
+              }}>
                 {error}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
           {formFields.map((field) => (
             <div key={field.name} style={{ gridColumn: field.name === 'password' || field.name === 'email' ? '1 / -1' : 'span 1' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>{field.label}</label>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '11px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{field.label}</label>
               <input 
                 type={field.type} 
                 className="input-base" 
@@ -91,14 +124,26 @@ const Signup = () => {
           ))}
           
           <div style={{ gridColumn: '1 / -1', marginTop: '0.5rem' }}>
-            <button type="submit" className="btn-primary" disabled={loading} style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-              {loading ? <span className="spinner"></span> : 'Create Account'}
+            <button 
+              type="submit" 
+              className="btn-primary" 
+              disabled={loading} 
+              style={{ 
+                width: '100%', 
+                display: 'flex', 
+                justifyContent: 'center',
+                textTransform: 'uppercase',
+                fontSize: '14px',
+                fontWeight: 600
+              }}
+            >
+              {loading ? <span className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }}></span> : 'Register & Join'}
             </button>
           </div>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Already have an account? <Link to="/login" style={{ color: 'var(--primary-accent)' }}>Login</Link>
+        <p style={{ textAlign: 'center', marginTop: '2.5rem', fontSize: '13px', color: 'var(--color-mute)' }}>
+          Already registered? <Link to="/login" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>Sign In</Link>
         </p>
       </motion.div>
     </div>

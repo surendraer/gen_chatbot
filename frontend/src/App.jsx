@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthContext } from './context/AuthContext';
 import Navbar from './components/Navbar';
@@ -15,10 +15,40 @@ const PrivateRoute = ({ children }) => {
 };
 
 function App() {
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-      <Navbar />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'auto', minHeight: 0 }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      height: '100vh', 
+      overflow: 'hidden',
+      backgroundColor: 'var(--color-canvas)',
+      color: 'var(--color-ink)',
+      transition: 'background-color var(--transition-medium), color var(--transition-medium)'
+    }}>
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+      <div style={{ 
+        flex: 1, 
+        display: 'flex', 
+        flexDirection: 'column', 
+        overflow: 'auto', 
+        minHeight: 0,
+        backgroundColor: 'var(--color-canvas)',
+        color: 'var(--color-ink)',
+        transition: 'background-color var(--transition-medium), color var(--transition-medium)'
+      }}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />

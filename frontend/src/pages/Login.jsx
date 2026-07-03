@@ -31,30 +31,62 @@ const Login = () => {
   };
 
   return (
-    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ 
+      flex: 1, 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '2rem',
+      backgroundColor: 'var(--color-canvas)' 
+    }}>
       <motion.div 
-        className="glass-panel"
-        style={{ padding: '3rem', width: '100%', maxWidth: '400px' }}
-        initial={{ y: 20, opacity: 0 }}
+        style={{ 
+          padding: '3rem 2.5rem', 
+          width: '100%', 
+          maxWidth: '440px',
+          backgroundColor: 'var(--color-canvas)',
+          border: '1px solid var(--color-hairline-soft)'
+        }}
+        initial={{ y: 15, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div style={{ background: 'rgba(99,102,241,0.2)', padding: '16px', borderRadius: '50%', display: 'inline-flex', color: 'var(--primary-accent)', marginBottom: '1rem' }}>
-            <LogIn size={32} />
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{ 
+            backgroundColor: 'var(--color-ink)', 
+            color: 'var(--color-on-primary)', 
+            padding: '14px', 
+            borderRadius: 'var(--rounded-full)', 
+            display: 'inline-flex', 
+            marginBottom: '1rem' 
+          }}>
+            <LogIn size={24} />
           </div>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700 }}>Welcome Back</h2>
-          <p style={{ color: 'var(--text-muted)' }}>Login to continue to GenBot</p>
+          <span style={{ fontSize: '11px', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--color-mute)', display: 'block' }}>
+            PORTAL ACCESS
+          </span>
+          <h2 className="heading-lg" style={{ textTransform: 'uppercase', marginTop: '0.25rem' }}>
+            Welcome Back
+          </h2>
         </div>
 
         {error && (
-          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', padding: '12px', borderRadius: '8px', marginBottom: '1.5rem', textAlign: 'center', fontSize: '0.9rem', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+          <div style={{ 
+            backgroundColor: 'rgba(211,0,5,0.05)', 
+            color: 'var(--color-sale)', 
+            padding: '12px', 
+            border: '1px solid rgba(211,0,5,0.2)',
+            fontSize: '13px', 
+            textAlign: 'center', 
+            marginBottom: '1.5rem',
+            fontWeight: 500
+          }}>
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Username</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '11px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Username</label>
             <input 
               type="text" 
               className="input-base" 
@@ -65,7 +97,7 @@ const Login = () => {
             />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>Password</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '11px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Password</label>
             <input 
               type="password" 
               className="input-base" 
@@ -76,13 +108,26 @@ const Login = () => {
             />
           </div>
           
-          <button type="submit" className="btn-primary" disabled={loading} style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
-            {loading ? <span className="spinner"></span> : 'Login to GenBot'}
+          <button 
+            type="submit" 
+            className="btn-primary" 
+            disabled={loading} 
+            style={{ 
+              marginTop: '0.5rem', 
+              width: '100%', 
+              display: 'flex', 
+              justifyContent: 'center',
+              textTransform: 'uppercase',
+              fontSize: '14px',
+              fontWeight: 600
+            }}
+          >
+            {loading ? <span className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }}></span> : 'Sign In'}
           </button>
         </form>
 
-        <p style={{ textAlign: 'center', marginTop: '2rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-          Don't have an account? <Link to="/signup" style={{ color: 'var(--primary-accent)' }}>Sign up</Link>
+        <p style={{ textAlign: 'center', marginTop: '2.5rem', fontSize: '13px', color: 'var(--color-mute)' }}>
+          New to GenBot? <Link to="/signup" style={{ color: 'var(--color-ink)', fontWeight: 600 }}>Create Account</Link>
         </p>
       </motion.div>
     </div>
