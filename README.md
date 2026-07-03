@@ -1,132 +1,86 @@
-# 🤖 GenBot — AI Chatbot with Persistent Conversations
+# 🤖 GenBot — Minimalist AI Chatbot
 
-A full-stack AI chatbot application featuring real-time streaming responses, a ChatGPT-style interface with conversation history, user authentication, and profile management. Built with the MERN stack and powered by **Llama 3.3 70B** via the Groq API.
+A lightweight full-stack AI chatbot application featuring real-time streaming responses, a sidebar thread manager, user authentication, and profile editing. Built with a high-contrast editorial look and powered by **Llama 3.3 70B** on Groq.
 
-🔗 **Live Demo**: [gen-chatbot-three.vercel.app](https://gen-chatbot-three.vercel.app)
-
----
-
-## ✨ Features
-
-### 🧠 AI Chat
-- **Real-time Streaming (SSE)** — AI responses stream token-by-token via Server-Sent Events for a natural typing effect
-- **Conversation Context** — Full multi-turn context is sent to the LLM so the AI remembers what you said earlier in the conversation
-- **ChatGPT-style Sidebar** — Browse, resume, and create new conversation threads from a persistent sidebar
-- **Markdown Rendering** — Bot responses render rich markdown including tables, code blocks with syntax highlighting, and copy-to-clipboard
-- **Voice Input** — Speak your messages using the Web Speech API (Chrome/Edge)
-
-### 🔐 Authentication & Security
-- **JWT Authentication** — Secure token-based auth with 7-day expiry and auto-logout on expiration
-- **Password Hashing** — Bcrypt with salt rounds for secure password storage
-- **Input Validation** — Comprehensive server-side validation (email format, password strength, username rules)
-- **Protected Routes** — All chat and profile endpoints require valid authentication
-
-### 👤 User Management
-- **Profile Dashboard** — View and edit personal details with a tabbed settings interface
-- **Password Reset** — Change password with current password verification
-- **Account Deletion** — Permanently delete account and all associated data
-- **Duplicate Detection** — Prevents duplicate emails, usernames, and phone numbers at signup
-
-### 📜 Conversation History
-- **Persistent Storage** — All conversations are saved to MongoDB and grouped by session
-- **Search & Filter** — Full-text search across all past conversations
-- **Date Grouping** — History organized by Today, Yesterday, Last 7 Days, and Earlier
-- **Expandable View** — Click any conversation to expand and review the full chat thread
-- **Clear History** — One-click option to wipe all conversation data
-
-### 🎨 UI/UX
-- **Glassmorphism Design** — Modern frosted-glass aesthetic with subtle backdrop blur effects
-- **Smooth Animations** — Page transitions and micro-interactions powered by Framer Motion
-- **Responsive Layout** — Fully responsive with mobile sidebar toggle and adaptive layouts
-- **Dark Theme** — Premium dark mode interface with carefully curated color palette
-- **Independent Scrolling** — Sidebar and chat area scroll independently (no page-level scroll bleed)
+🔗 **Demo Link**: [gen-chatbot-three.vercel.app](https://gen-chatbot-three.vercel.app)
 
 ---
 
-## 🛠️ Tech Stack
+## ⚙️ Core Architecture & "Why this Stack?"
 
-| Layer | Technology |
-|-------|-----------|
-| **Frontend** | React 18, Vite, React Router v7, Framer Motion, Axios |
-| **Backend** | Node.js, Express 5, Mongoose, JWT, Bcrypt |
-| **Database** | MongoDB Atlas |
-| **AI Model** | Llama 3.3 70B (via Groq API with OpenAI-compatible SDK) |
-| **Streaming** | Server-Sent Events (SSE) |
-| **Deployment** | Vercel (Frontend), Render (Backend) |
+This project follows specific technology design choices optimized for speed, simplicity, and visual focus:
+
+### ⚡ Why Groq + Llama 3.3?
+- **Speed Over Everything**: Groq's LPU (Language Processing Unit) delivers inference speeds exceeding 250 tokens per second. We query the `llama-3.3-70b-versatile` model to provide fast responses.
+
+### 📡 Why Server-Sent Events (SSE)?
+- **Low-Overhead Streaming**: Rather than polling or maintaining full duplex WebSockets, we utilize Server-Sent Events (via Express and standard `fetch` body readers). This provides an easy, unidirectional flow that streams tokens directly into the client.
+
+### 🍃 Why MongoDB?
+- **Flexible Document Model**: Conversation histories are grouped under unique thread UUIDs. MongoDB's document structure easily stores nested, heterogeneous schema logs without requiring strict table joins.
+
+### 🎨 Why the Nike Minimal Aesthetic?
+- **Contrast Focus**: Following high-end digital editorial design specs, the interface relies on true black/white colors, `9999px` pills, and flat container grids. This design ensures that user content takes absolute priority.
 
 ---
 
-## 📁 Project Structure
+## 📁 Repository Map
 
 ```
 GenBot/
-├── server.js              # Express server entry point with CORS config
-├── db.js                  # MongoDB connection handler
-├── jwt.js                 # JWT token generation & auth middleware
+├── server.js              # Express server with CORS config
+├── db.js                  # MongoDB Mongoose connection
+├── jwt.js                 # JWT auth middleware
 ├── models/
-│   ├── user.js            # User schema with bcrypt password hashing
-│   └── prompt.js          # Prompt schema with conversationId grouping
+│   ├── user.js            # User model (name, username, email, mobile, password)
+│   └── prompt.js          # Dialogue history (textPrompt, textAnswer, conversationId)
 ├── routes/
-│   ├── userRoutes.js      # Auth, profile CRUD, password reset
-│   └── promptRoutes.js    # SSE streaming, history, clear endpoints
-├── frontend/
-│   ├── index.html         # SEO-optimized HTML entry
-│   └── src/
-│       ├── main.jsx       # React entry with providers
-│       ├── App.jsx        # Route definitions & layout
-│       ├── api.js         # Axios instance with interceptors
-│       ├── index.css      # Global design system & utilities
-│       ├── context/
-│       │   └── AuthContext.jsx  # Global auth state management
-│       ├── components/
-│       │   └── Navbar.jsx       # Navigation bar
-│       └── pages/
-│           ├── Home.jsx         # Landing page
-│           ├── Login.jsx        # Login form
-│           ├── Signup.jsx       # Registration form
-│           ├── Chat.jsx         # Main chat with sidebar
-│           ├── History.jsx      # Grouped conversation history
-│           └── Profile.jsx      # User settings dashboard
-└── .gitignore
+│   ├── userRoutes.js      # Auth check, signup, profile endpoints
+│   └── promptRoutes.js    # Streaming completions and history routes
+└── frontend/              # Client (Vite + React 18)
+    ├── src/
+    │   ├── main.jsx       # App entry
+    │   ├── App.jsx        # Routing configuration
+    │   ├── api.js         # Centralized Axios configs
+    │   ├── index.css      # Core Nike typography tokens & Dark Mode switches
+    │   ├── context/       # Authentication context loading
+    │   ├── components/    # Reusable layouts (Navbar)
+    │   └── pages/         # View panels (Home, Chat, History, Settings)
+    └── vercel.json        # Single-page-app route rewrite routing rules
 ```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 1. Prerequisites
 - Node.js 18+
-- MongoDB Atlas account (or local MongoDB)
-- Groq API key ([console.groq.com](https://console.groq.com))
+- MongoDB Atlas cluster URL
+- Groq API Key ([console.groq.com](https://console.groq.com))
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/surendraer/gen_chatbot.git
-cd gen_chatbot
-```
-
-### 2. Backend setup
+### 2. Backend Setup
+Run in root folder:
 ```bash
 npm install
 ```
 
-Create a `.env` file in the root directory:
+Create a root `.env` file:
 ```env
-MONGO_URL=mongodb+srv://<username>:<password>@cluster.mongodb.net/genbot
-JWT_SECRET=your_jwt_secret_key_here
-GROQ_API_KEY=gsk_your_groq_api_key_here
+MONGO_URL=mongodb+srv://<user>:<pwd>@cluster.mongodb.net/database
+JWT_SECRET=your_jwt_signature_secret_key
+GROQ_API_KEY=gsk_your_groq_api_token
 PORT=3000
 ALLOWED_ORIGINS=http://localhost:5173
 ```
 
-Start the backend:
+Start backend:
 ```bash
 npm run dev
 ```
 
-### 3. Frontend setup
+### 3. Frontend Setup
+Run in `frontend` folder:
 ```bash
-cd frontend
 npm install
 ```
 
@@ -135,79 +89,16 @@ Create a `frontend/.env` file:
 VITE_API_URL=http://localhost:3000
 ```
 
-Start the frontend:
+Start client:
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
 ---
 
-## 🌐 Deployment
+## 📡 Key API Routes
 
-### Frontend (Vercel)
-1. Connect the GitHub repo to Vercel
-2. Set **Root Directory** to `frontend`
-3. Add environment variable: `VITE_API_URL` = your Render backend URL
-4. Deploy
-
-### Backend (Render)
-1. Connect the GitHub repo to Render
-2. Set **Root Directory** to ` ` (empty — root of repo)
-3. Set **Build Command** to `npm install`
-4. Set **Start Command** to `node server.js`
-5. Add environment variables: `MONGO_URL`, `JWT_SECRET`, `GROQ_API_KEY`, `ALLOWED_ORIGINS`
-6. Deploy
-
----
-
-## 📡 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/user/signup` | Register a new user |
-| `POST` | `/user/login` | Login and receive JWT |
-| `GET` | `/user/profile` | Get current user profile |
-| `PUT` | `/user/profile/update` | Update profile details |
-| `POST` | `/user/password/reset` | Change password |
-| `DELETE` | `/user/profile/delete` | Delete account permanently |
-
-### Chat (Protected — requires `Authorization: Bearer <token>`)
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/prompt` | Send prompt & receive SSE stream |
-| `GET` | `/prompt/history` | Fetch all conversation history |
-| `DELETE` | `/prompt/clear` | Clear all conversation history |
-
----
-
-## 📸 Screenshots
-
-| Landing Page | Chat Interface |
-|:---:|:---:|
-| Modern glassmorphism landing | ChatGPT-style sidebar with conversations |
-
-| Conversation History | Profile Settings |
-|:---:|:---:|
-| Expandable grouped conversations | Tabbed profile with security settings |
-
----
-
-## 🔑 Key Implementation Details
-
-- **SSE Streaming**: The backend uses `res.write()` with `X-Accel-Buffering: no` headers to bypass Render's reverse proxy buffering, ensuring real-time token delivery
-- **Conversation Grouping**: Messages are grouped by `conversationId` (UUID generated client-side) enabling multi-turn context and sidebar navigation
-- **Auth Flow**: JWT tokens are stored in `localStorage`, automatically attached via Axios interceptors, and validated server-side on every protected request
-- **Responsive Sidebar**: Uses Framer Motion for smooth slide-in/out animation with independent scroll regions for sidebar and chat content
-
----
-
-## 📄 License
-
-This project is open source and available under the [MIT License](LICENSE).
-
----
-
-**Built with ❤️ by [Surendra](https://github.com/surendraer)**
+- `POST /user/signup` — Registers user (validates username uniqueness, mobile structure, and password strengths).
+- `GET /user/check-username/:username` — Performs live availability audits.
+- `POST /prompt` — Initiates an SSE text stream for prompts.
+- `GET /prompt/history` — Retreives past dialogue listings.

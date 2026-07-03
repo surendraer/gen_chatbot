@@ -1,16 +1,25 @@
-.env
+# Dependency & build outputs
 node_modules/
-frontend/.env
 frontend/node_modules/
 frontend/dist/
+dist/
+build/
+
+# Local configuration overrides (Catch-all)
+*.env*
+
+# Reference documents & agent scratchpads
+*.md
+!README.md
+.agents/
 idea.txt
 *.log
 
-# System files
+# System junk files
 .DS_Store
 Thumbs.db
 
-# IDE workspace configurations
+# Editor configurations
 .vscode/
 .idea/
 *.suo
@@ -18,4 +27,3 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
-DESIGN.md
