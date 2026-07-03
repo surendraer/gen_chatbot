@@ -325,17 +325,28 @@ const Chat = () => {
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
+      let buffer = '';
       let finished = false;
 
       while (!finished) {
         const { value, done: streamDone } = await reader.read();
         if (streamDone) break;
-        const chunk = decoder.decode(value);
-        for (const line of chunk.split('\n')) {
-          if (!line.startsWith('data: ')) continue;
-          const payload = line.slice(6).trim();
+        
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        
+        // Save the last line if it is incomplete
+        buffer = lines.pop() || '';
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (!trimmed.startsWith('data: ')) continue;
+          
+          const payload = trimmed.slice(6).trim();
           if (payload === '[DONE]') {
             finished = true;
+            break;
           } else {
             try {
               const parsed = JSON.parse(payload);
@@ -344,7 +355,9 @@ const Chat = () => {
                   m.id === botMsgId ? { ...m, text: m.text + parsed.text } : m
                 ));
               }
-            } catch { /* partial chunk */ }
+            } catch (e) {
+              console.warn("Parse error for partial line:", trimmed, e);
+            }
           }
         }
       }
@@ -576,7 +589,7 @@ const Chat = () => {
                       }}
                       onMouseOver={(e) => {
                         if (!isActive) {
-                          e.currentTarget.style.background = 'rgba(17,17,17,0.03)';
+                          e.currentTarget.style.background = 'var(--color-translucent-hover)';
                         }
                       }}
                       onMouseOut={(e) => {
@@ -782,16 +795,16 @@ const Chat = () => {
                   transition: 'all var(--transition-fast) ease', 
                   width: '100%' 
                 }}
-                disabled={loading}
               />
               <div style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', display: 'flex', gap: '6px', alignItems: 'center' }}>
                 {voiceSupported && (
                   <button 
                     type="button" 
                     onClick={toggleListening} 
+                    disabled={loading}
                     title={isListening ? 'Stop & send' : 'Speak message'} 
                     style={{ 
-                      backgroundColor: isListening ? 'var(--color-sale)' : 'rgba(17,17,17,0.05)', 
+                      backgroundColor: isListening ? 'var(--color-sale)' : 'var(--color-translucent-ink)', 
                       color: isListening ? 'var(--color-on-primary)' : 'var(--color-ink)', 
                       width: '36px',
                       height: '36px', 
@@ -799,9 +812,10 @@ const Chat = () => {
                       display: 'flex', 
                       alignItems: 'center', 
                       justifyContent: 'center', 
-                      cursor: 'pointer', 
+                      cursor: loading ? 'not-allowed' : 'pointer', 
                       transition: 'all var(--transition-fast)',
-                      border: 'none'
+                      border: 'none',
+                      opacity: loading ? 0.4 : 1
                     }}
                   >
                     {isListening ? <MicOff size={16} /> : <Mic size={16} />}
@@ -811,7 +825,7 @@ const Chat = () => {
                   type="submit" 
                   disabled={!input.trim() || loading} 
                   style={{ 
-                    backgroundColor: input.trim() && !loading ? 'var(--color-ink)' : 'rgba(17,17,17,0.05)', 
+                    backgroundColor: input.trim() && !loading ? 'var(--color-ink)' : 'var(--color-translucent-ink)', 
                     color: input.trim() && !loading ? 'var(--color-on-primary)' : 'var(--color-stone)', 
                     width: '36px',
                     height: '36px', 
@@ -821,7 +835,8 @@ const Chat = () => {
                     justifyContent: 'center', 
                     transition: 'all var(--transition-fast)', 
                     cursor: input.trim() && !loading ? 'pointer' : 'not-allowed',
-                    border: 'none'
+                    border: 'none',
+                    opacity: loading ? 0.4 : 1
                   }}
                 >
                   <Send size={16} />

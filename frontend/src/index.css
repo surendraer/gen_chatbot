@@ -40,6 +40,9 @@
   /* Transition Scale */
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-medium: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  --color-translucent-ink: rgba(17, 17, 17, 0.05);
+  --color-translucent-hover: rgba(17, 17, 17, 0.03);
 }
 
 [data-theme='dark'] {
@@ -60,6 +63,21 @@
   --color-success: #30d158;
   --color-success-bright: #34c759;
   --color-info: #0a84ff;
+
+  --color-translucent-ink: rgba(255, 255, 255, 0.08);
+  --color-translucent-hover: rgba(255, 255, 255, 0.04);
+}
+
+/* Campaign Promo Banner styling */
+.campaign-promo-banner {
+  background-color: var(--color-ink);
+  color: var(--color-on-primary);
+  transition: background-color var(--transition-medium), color var(--transition-medium);
+}
+
+[data-theme='dark'] .campaign-promo-banner {
+  background-color: var(--color-soft-cloud) !important;
+  color: var(--color-ink) !important;
 }
 
 * {

@@ -16,8 +16,7 @@ const Profile = () => {
   // Profile Edit
   const [profileData, setProfileData] = useState({
     name: '',
-    mobile: '',
-    age: ''
+    mobile: ''
   });
 
   // Sync profileData when context user loads/updates
@@ -25,11 +24,17 @@ const Profile = () => {
     if (user) {
       setProfileData({
         name: user.name || '',
-        mobile: user.mobile || '',
-        age: user.age || ''
+        mobile: user.mobile || ''
       });
     }
   }, [user]);
+
+  const handleMobileChange = (e) => {
+    const val = e.target.value.replace(/\D/g, ''); // Enforce only digits
+    if (val.length <= 10) {
+      setProfileData({ ...profileData, mobile: val });
+    }
+  };
 
   // Password Reset
   const [pwdData, setPwdData] = useState({ currentPassword: '', newPassword: '' });
@@ -38,10 +43,7 @@ const Profile = () => {
     e.preventDefault();
     setError(''); setSuccess('');
     try {
-      const { data } = await api.put('/user/profile/update', {
-        ...profileData,
-        age: Number(profileData.age)
-      });
+      const { data } = await api.put('/user/profile/update', profileData);
       if (data.success) {
         setUser({ ...user, ...data.data }); // update context
         setSuccess('Profile updated successfully!');
@@ -249,27 +251,15 @@ const Profile = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mobile Number</label>
-                  <input 
-                    type="text" 
-                    value={editing ? profileData.mobile : user?.mobile || ''} 
-                    onChange={e => setProfileData({...profileData, mobile: e.target.value})} 
-                    disabled={!editing} 
-                    className="input-base" 
-                  />
-                </div>
-                <div>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Age</label>
-                  <input 
-                    type="number" 
-                    value={editing ? profileData.age : user?.age || ''} 
-                    onChange={e => setProfileData({...profileData, age: e.target.value})} 
-                    disabled={!editing} 
-                    className="input-base" 
-                  />
-                </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '12px', fontWeight: 700, color: 'var(--color-mute)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Mobile Number</label>
+                <input 
+                  type="text" 
+                  value={editing ? profileData.mobile : user?.mobile || ''} 
+                  onChange={handleMobileChange} 
+                  disabled={!editing} 
+                  className="input-base" 
+                />
               </div>
 
               <div>
@@ -282,7 +272,7 @@ const Profile = () => {
                   <button 
                     type="button" 
                     className="btn-secondary" 
-                    onClick={() => { setEditing(false); setProfileData({ name: user.name, mobile: user.mobile, age: user.age }) }} 
+                    onClick={() => { setEditing(false); setProfileData({ name: user.name, mobile: user.mobile }) }} 
                     style={{ height: '40px', borderRadius: 'var(--rounded-lg)', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '4px' }}
                   >
                     <X size={15} /> CANCEL

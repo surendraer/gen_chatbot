@@ -10,11 +10,29 @@ function toPublicUser(userData) {
         id: userData._id,
         name: userData.name,
         userName: userData.userName,
-        age: userData.age,
         email: userData.email,
         mobile: userData.mobile
     };
 }
+
+// check username availability
+router.get("/check-username/:username", async (req, res) => {
+    try {
+        const userName = req.params.username.trim();
+        if (!userName) {
+            return res.status(400).json({ success: false, message: "Username is required" });
+        }
+        const user = await User.findOne({ userName: userName });
+        if (user) {
+            return res.status(200).json({ success: true, available: false, message: "Username is already taken" });
+        }
+        return res.status(200).json({ success: true, available: true, message: "Username is available" });
+    } catch (error) {
+        console.error("Error checking username availability:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
+});
+
 // signup
 router.post("/signup", async (req, res) => {
 
@@ -26,9 +44,8 @@ router.post("/signup", async (req, res) => {
         const email = (data.email || "").trim().toLowerCase();
         const mobile = String(data.mobile || "").trim();
         const password = (data.password || "").trim();
-        const age = Number(data.age);
 
-        if (!name || !userName || !email || !mobile || !password || Number.isNaN(age)) {
+        if (!name || !userName || !email || !mobile || !password) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
         if (name.length < 2 || name.length > 50) {
@@ -40,9 +57,7 @@ router.post("/signup", async (req, res) => {
                 message: "Username must be 3-20 chars and contain only letters, numbers, underscore"
             });
         }
-        if (!Number.isInteger(age) || age < 13 || age > 120) {
-            return res.status(400).json({ success: false, message: "Age must be an integer between 13 and 120" });
-        }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             return res.status(400).json({ success: false, message: "Invalid email format" });
         }
@@ -85,7 +100,6 @@ router.post("/signup", async (req, res) => {
         data.email = email;
         data.mobile = mobile;
         data.password = password;
-        data.age = age;
 
         const newUser = new User(data);
         const response = await newUser.save();
@@ -174,12 +188,7 @@ router.put("/profile/update", jwtAuthMiddleware, async(req,res)=>{
         if (safeData.mobile && !/^\d{10}$/.test(safeData.mobile)) {
             return res.status(400).json({ success: false, message: "Mobile must be exactly 10 digits" });
         }
-        if (safeData.age) {
-            const ageNum = Number(safeData.age);
-            if (!Number.isInteger(ageNum) || ageNum < 13 || ageNum > 120) {
-                return res.status(400).json({ success: false, message: "Invalid age" });
-            }
-        }
+
 
         // Check for conflicts if unique fields are being updated
         if (safeData.email || safeData.userName || safeData.mobile) {

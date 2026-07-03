@@ -1,7 +1,6 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import heroBg from '../assets/tech_hero_bg.png';
 import { Sparkles, Zap, Shield, Mic } from 'lucide-react';
 
 const Home = () => {
@@ -23,75 +22,54 @@ const Home = () => {
       overflowY: 'auto',
       transition: 'background-color var(--transition-medium), color var(--transition-medium)'
     }}>
-      {/* 1. Campaign Hero Section */}
+      {/* 1. Typographic Hero Section */}
       <div style={{
-        position: 'relative',
-        width: '100%',
-        height: '75vh',
-        minHeight: '480px',
-        backgroundImage: `url(${heroBg})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        padding: '5rem 2rem 4rem 2rem',
+        textAlign: 'center',
         display: 'flex',
-        alignItems: 'flex-end',
-        padding: '3rem 2rem var(--space-section) 2rem',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderBottom: '1px solid var(--color-hairline-soft)',
+        backgroundColor: 'var(--color-canvas)',
+        transition: 'background-color var(--transition-medium), border-color var(--transition-medium)'
       }}>
-        {/* Dark overlay for text readability */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'linear-gradient(to top, rgba(17,17,17,0.9) 0%, rgba(17,17,17,0.3) 60%, rgba(17,17,17,0.5) 100%)',
-          zIndex: 1
-        }} />
-
-        {/* Content Box */}
-        <div style={{
-          position: 'relative',
-          zIndex: 2,
-          maxWidth: '1200px',
-          width: '100%',
-          margin: '0 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'flex-start'
+        <span style={{ 
+          fontSize: '13px', 
+          fontWeight: 700, 
+          letterSpacing: '0.25em', 
+          textTransform: 'uppercase',
+          color: 'var(--color-mute)',
+          marginBottom: '1rem',
+          transition: 'color var(--transition-medium)'
         }}>
-          <span style={{ 
-            color: 'var(--color-on-primary)', 
-            fontSize: '14px', 
-            fontWeight: 700, 
-            letterSpacing: '0.2em', 
+          POWERED BY LLAMA 3.3 70B & GROQ
+        </span>
+        <h1 className="display-campaign" style={{ 
+          color: 'var(--color-ink)',
+          maxWidth: '800px',
+          marginBottom: '2rem',
+          transition: 'color var(--transition-medium)',
+          fontSize: '72px'
+        }}>
+          UNLOCK SPEED.<br />UNLEASH INTELLIGENCE.
+        </h1>
+        <button 
+          onClick={handleCTA}
+          className="btn-primary"
+          style={{ 
+            fontSize: '15px', 
+            padding: '14px 36px',
+            height: '48px',
             textTransform: 'uppercase',
-            marginBottom: '1rem',
-            opacity: 0.9
-          }}>
-            Powered by Llama 3.3 70B & Groq
-          </span>
-          <h1 className="display-campaign" style={{ 
-            color: 'var(--color-on-primary)',
-            maxWidth: '900px',
-            marginBottom: '2rem'
-          }}>
-            UNLOCK SPEED.<br />UNLEASH INTELLIGENCE.
-          </h1>
-          <button 
-            onClick={handleCTA}
-            className="btn-outline-on-image"
-            style={{ 
-              fontSize: '16px', 
-              padding: '14px 36px',
-              height: '48px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}
-          >
-            <Sparkles size={16} />
-            {user ? 'CONTINUE CHATTING' : 'START CHATTING NOW'}
-          </button>
-        </div>
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}
+        >
+          <Sparkles size={16} />
+          {user ? 'CONTINUE CHATTING' : 'START CHATTING NOW'}
+        </button>
       </div>
 
       {/* 2. Feature Cards Section (Stacked below Hero, with Spacing Section) */}
@@ -175,20 +153,20 @@ const Home = () => {
       </div>
 
       {/* 4. Secondary Campaign CTA Block (Stacked at Spacing Section) */}
-      <div style={{
-        backgroundColor: 'var(--color-ink)',
-        color: 'var(--color-on-primary)',
-        textAlign: 'center',
-        padding: '5rem 2rem',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '2rem',
-        transition: 'background-color var(--transition-medium), color var(--transition-medium)'
-      }}>
+      <div 
+        className="campaign-promo-banner"
+        style={{
+          textAlign: 'center',
+          padding: '5rem 2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '2rem'
+        }}
+      >
         <h2 className="display-campaign" style={{ 
-          color: 'var(--color-on-primary)', 
+          color: 'inherit', 
           fontSize: '48px',
           maxWidth: '800px',
           margin: 0
