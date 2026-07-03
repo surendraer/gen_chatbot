@@ -3,6 +3,8 @@
 
 I built GenBot, a lightweight full-stack AI chatbot application. It features real-time streaming responses, a clean sidebar conversation manager, secure user authentication, profile editing, and verification. I designed it using a premium, high-contrast visual layout inspired by high-end design systems.
 
+🔗 **Live Link**: [gen-chatbot-three.vercel.app](https://gen-chatbot-three.vercel.app/)
+
 ---
 
 ## ⚙️ Why I Chose this Stack
@@ -42,7 +44,7 @@ MONGO_URL=mongodb+srv://<user>:<pwd>@cluster.mongodb.net/database
 JWT_SECRET=my_jwt_token_signature_secret
 GROQ_API_KEY=gsk_my_groq_api_token
 PORT=3000
-ALLOWED_ORIGINS=http://localhost:5173
+ALLOWED_ORIGINS=https://gen-chatbot-three.vercel.app
 
 # Email Verification (Brevo / Gmail SMTP)
 EMAIL_HOST=smtp-relay.brevo.com
@@ -50,6 +52,7 @@ EMAIL_PORT=587
 EMAIL_USER=your-smtp-login-email
 EMAIL_PASS=your-smtp-password-or-app-key
 EMAIL_FROM_NAME=GenBot
+EMAIL_FROM_ADDRESS=your-verified-sender-email
 ```
 
 Start my server:
