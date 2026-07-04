@@ -53,9 +53,7 @@ app.get("/", (req, res) => {
     res.send("hii")
 })
 
-app.get('/loaderio-a477ff00f5b453d7b28ba8c7fa11d2b1.txt', (req, res) => {
-    res.send('loaderio-a477ff00f5b453d7b28ba8c7fa11d2b1');
-});
+
 const Port = process.env.PORT || 3000;
 app.listen(Port, () => {
     console.log("project is live")
