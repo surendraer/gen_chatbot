@@ -9,7 +9,7 @@ const cleanEnvVar = (val) => {
 };
 
 const EMAIL_HOST = cleanEnvVar(process.env.EMAIL_HOST) || "smtp-relay.brevo.com";
-const EMAIL_PORT = parseInt(cleanEnvVar(process.env.EMAIL_PORT) || "587");
+const EMAIL_PORT = parseInt(cleanEnvVar(process.env.EMAIL_PORT) || "2525");
 const EMAIL_SECURE = cleanEnvVar(process.env.EMAIL_SECURE) === "true";
 const EMAIL_USER = cleanEnvVar(process.env.EMAIL_USER);
 const EMAIL_PASS = cleanEnvVar(process.env.EMAIL_PASS);
@@ -90,7 +90,32 @@ const sendVerificationEmail = async (email, otp) => {
         html: htmlContent
     };
 
-    return transporter.sendMail(mailOptions);
+    try {
+        return await transporter.sendMail(mailOptions);
+    } catch (smtpError) {
+        console.error("SMTP delivery failed:", smtpError);
+        // If we were using port 587, try auto-healing on port 2525
+        if (EMAIL_PORT === 587) {
+            console.log("Attempting auto-heal SMTP recovery on port 2525...");
+            try {
+                const backupTransporter = nodemailer.createTransport({
+                    host: EMAIL_HOST,
+                    port: 2525,
+                    secure: false,
+                    auth: {
+                        user: EMAIL_USER,
+                        pass: EMAIL_PASS
+                    }
+                });
+                const backupResult = await backupTransporter.sendMail(mailOptions);
+                console.log("SMTP backup delivery succeeded on port 2525!");
+                return backupResult;
+            } catch (backupError) {
+                console.error("SMTP backup delivery on port 2525 also failed:", backupError);
+            }
+        }
+        throw smtpError;
+    }
 };
 
 module.exports = { sendVerificationEmail };
